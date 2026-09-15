@@ -78,6 +78,9 @@ void findECMPRoutes(int start, int target, const std::vector<std::vector<Edge>> 
 
         if (d > dist[u])
             continue;
+
+        if (u == target) break;
+
         for (const auto &edge : graph[u])
         {
             int v = edge.to;
@@ -171,10 +174,20 @@ int main()
         {{4, 1, 1}}                  // 5
     };
     std::vector<int> decoded = decoder(cromossomo, graph, 0, 5, 5);
-    std::cout << "Caminho decodificado: ";
-    for (int gene : decoded)
+    std::vector<std::vector<int>> list;
+    for (int i = 1; i < decoded.size(); ++i)
     {
-        std::cout << gene << " ";
+       list.clear();
+       findECMPRoutes(decoded[i - 1], decoded[i], graph, list);
+       std::cout << "\nCaminhos encontrados entre " << decoded[i - 1] << " e " << decoded[i] << ": ";
+       for (const auto &parents : list)
+         {
+              for (int parent : parents)
+              {
+                std::cout << parent << " ";
+              }
+              std::cout << "| ";
+         }
     }
     std::cout << std::endl;
 
