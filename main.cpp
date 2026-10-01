@@ -6,6 +6,9 @@
 #include <random>
 #include <algorithm>
 #include <utility>
+#include <limits>
+#include <numeric>
+#include <functional>
 
 struct Edge
 {
@@ -48,23 +51,26 @@ std::vector<double> crossOver(const std::vector<double> &elite, const std::vecto
     std::uniform_real_distribution<double> dis(0.0, 1.0);
     for (int i = 0; i < tamanho; ++i)
     {
-        if (dis(gen) < bias)
-        {
-            filho[i] = elite[i];
-        }
-        else
-        {
-            filho[i] = nonElite[i];
-        }
+        filho[i] = (dis(gen) < bias) ? elite[i] : nonElite[i];
     }
     return filho;
 }
 
-void findECMPRoutes(int start, int target, const std::vector<std::vector<Edge>> &graph, std::vector<std::vector<int>> &parentList)
+// ---------------------------------------------------------------------
+// Dijkstra com registro de predecessores (necessário para o ECMP)
+//
+// parentList[v] guarda todos os nós u tais que a aresta u->v participa
+// de PELO MENOS UM caminho mínimo de 'start' até v. Com isso conseguimos
+// reconstruir, mais adiante, o DAG de caminhos mais curtos usado pelo
+// espalhamento ECMP.
+// ---------------------------------------------------------------------
+
+void dijkstraComPredecessores(int start, const std::vector<std::vector<Edge>> &graph,
+                               std::vector<int> &dist, std::vector<std::vector<int>> &parentList)
 {
     int n = graph.size();
-    std::vector<int> dist(n, std::numeric_limits<int>::max());
-    parentList.assign(n, std::vector<int>());
+    dist.assign(n, std::numeric_limits<int>::max());
+    parentList.assign(n, {});
     std::priority_queue<Node, std::vector<Node>, std::greater<Node>> pq;
     dist[start] = 0;
     pq.push({start, 0});
@@ -79,8 +85,6 @@ void findECMPRoutes(int start, int target, const std::vector<std::vector<Edge>> 
         if (d > dist[u])
             continue;
 
-        if (u == target) break;
-
         for (const auto &edge : graph[u])
         {
             int v = edge.to;
@@ -89,8 +93,7 @@ void findECMPRoutes(int start, int target, const std::vector<std::vector<Edge>> 
             if (dist[u] + weight < dist[v])
             {
                 dist[v] = dist[u] + weight;
-                parentList[v].clear();
-                parentList[v].push_back(u);
+                parentList[v] = {u};
                 pq.push({v, dist[v]});
             }
             else if (dist[u] + weight == dist[v])
@@ -101,95 +104,258 @@ void findECMPRoutes(int start, int target, const std::vector<std::vector<Edge>> 
     }
 }
 
-std::vector<int> decoder(const std::vector<double> &cromossomo, const std::vector<std::vector<Edge>> &graph, int start, int target, int maxSeg)
+// ---------------------------------------------------------------------
+// Decoder BRKGA para demanda única estática (Algoritmo 1 do texto)
+//
+//   Passo 1: l = floor(K_size * (l_max + 1)), l_max = maxSeg - 1
+//            como l_max + 1 = maxSeg, temos l = floor(K_size * maxSeg)
+//   Passo 2: V_cand = V \ {s,t}, ordenado de forma DECRESCENTE por K_v
+//            W = os primeiros l nós de V_cand
+//   Passo 3: se l = 0, p = <s,t>; senão p = <s, w1,...,wl, t>
+//
+// Convenção de cromossomo: gene 0 = K_size; genes 1..|V| = K_v do nó v
+// (v indo de 0 a |V|-1), logo o cromossomo tem tamanho N = |V| + 1.
+// ---------------------------------------------------------------------
+
+std::vector<int> decoder(const std::vector<double> &cromossomo,
+                          const std::vector<std::vector<Edge>> &graph,
+                          int start, int target, int maxSeg)
 {
-    struct PairDoubleCompare
-    {
-        bool operator()(const std::pair<int, double> &p, double val) const
-        {
-            return p.second < val;
-        }
-        bool operator()(double val, const std::pair<int, double> &p) const
-        {
-            return val < p.second;
-        }
-    };
-    // cromossomo[0] é o gene que indica a quantidade de waypoints
-    int quantidadeWaypoints = static_cast<int>(cromossomo[0] * maxSeg);
-    std::vector<std::pair<int, double>> vCand;
-    std::vector<int> p;
+    int n = static_cast<int>(graph.size());
 
-    if (quantidadeWaypoints == 0 || graph.size() <= 2)
-    {
+    if (n <= 2)
         return {start, target};
-    }
 
-    for (int i = 1; i < graph.size(); ++i)
+    double kSize = cromossomo[0];
+    int l = static_cast<int>(kSize * maxSeg); // = floor(K_size * maxSeg), l em [0, maxSeg -]
+
+    if (l == 0)
+        return {start, target}; // roteamento direto via caminho mais curto
+
+    // Seleciona candidatos (todos os nós exceto origem e destino) com sua prioridade K_v
+    std::vector<std::pair<int, double>> vCand;
+    vCand.reserve(n);
+    for (int v = 0; v < n; ++v)
     {
-        if (i - 1 == start || i - 1 == target)
+        if (v == start || v == target)
             continue;
-        if (vCand.size() == 0)
-        {
-            vCand.push_back({i - 1, cromossomo[i]});
-            continue;
-        }
-        auto it = std::upper_bound(vCand.begin(), vCand.end(), cromossomo[i], PairDoubleCompare());
-        vCand.insert(it, {i - 1, cromossomo[i]});
+        double prioridade = cromossomo[v + 1];
+        vCand.push_back({v, prioridade});
     }
 
+    // Ordena em ordem DECRESCENTE de prioridade: maiores chaves primeiro
+    std::sort(vCand.begin(), vCand.end(),
+              [](const std::pair<int, double> &a, const std::pair<int, double> &b)
+              { return a.second > b.second; });
+
+    l = std::min<int>(l, static_cast<int>(vCand.size())); // segurança
+
+    std::vector<int> p;
     p.push_back(start);
-    for (int i = 0; i < quantidadeWaypoints; ++i)
-    {
+    for (int i = 0; i < l; ++i)
         p.push_back(vCand[i].first);
-    }
     p.push_back(target);
     return p;
 }
 
-std::vector<double> calculaVetorCarga(const std::vector<int> &p, const std::vector<std::vector<Edge>> &graph)
+// ---------------------------------------------------------------------
+// Cálculo de fitness
+//
+// Para uma demanda (s,t) roteada através do caminho em segmentos p, o
+// tráfego de cada segmento (i,j) consecutivo em p é espalhado sobre os
+// caminhos mais curtos IGP entre i e j segundo as regras do ECMP:
+// em cada nó u do DAG de caminhos mínimos, a fração de tráfego que
+// chega a u é dividida IGUALMENTE entre todos os seus sucessores no DAG.
+//
+// r(i,j,a) é a fração do tráfego do segmento (i,j) que atravessa o
+// arco a, obtida por essa divisão recursiva. A carga de cada arco é:
+//
+//     lambda(a) = ( sum_{(i,j) em p} r(i,j,a) * nu ) / c(a)
+//
+// O fitness do indivíduo é o vetor L = { lambda(a) : a em A }, ordenado
+// de forma DECRESCENTE, comparado lexicograficamente no torneio.
+// ---------------------------------------------------------------------
+
+// Constrói o grafo reverso (usado para achar, a partir de j, a distância
+// de CADA nó até j — necessário para restringir o DAG de ECMP apenas às
+// arestas que realmente pertencem a algum caminho mínimo de i até j).
+std::vector<std::vector<Edge>> construirGrafoReverso(const std::vector<std::vector<Edge>> &graph)
 {
-    std::vector<double> vetorCarga;
-    
-    return vetorCarga;
+    int n = static_cast<int>(graph.size());
+    std::vector<std::vector<Edge>> reverso(n);
+    for (int u = 0; u < n; ++u)
+        for (const auto &e : graph[u])
+            reverso[e.to].push_back({u, e.weight, e.capacity});
+    return reverso;
+}
+
+// Acumula, para um único segmento (i,j) do caminho, a parcela de tráfego
+// nu * r(i,j,a) em cada arco 'a', somando dentro de cargaAcumulada.
+// cargaAcumulada[u][e] refere-se à e-ésima aresta que sai do nó u.
+//
+// IMPORTANTE: o DAG de espalhamento ECMP não pode ser "toda a árvore de
+// Dijkstra a partir de i" — um nó u pode ter, na árvore de Dijkstra
+// completa, sucessores que levam a destinos totalmente alheios a j (por
+// exemplo, se dois waypoints diferentes do caminho compartilham um nó
+// intermediário C, mas seguem para arcos distintos depois de C). Se a
+// gente dividir o fluxo entre TODOS os sucessores de Dijkstra, parte do
+// tráfego vaza para arcos que não têm nada a ver com o segmento (i,j).
+//
+// A forma correta é restringir o DAG apenas às arestas (u,v) que
+// pertencem a ALGUM caminho mínimo de i até j especificamente, o que se
+// testa com: dist_i(u) + peso(u,v) + dist_paraJ(v) == dist_i(j), onde
+// dist_paraJ é calculado com um Dijkstra a partir de j no grafo reverso.
+void acumulaCargaSegmento(int i, int j, double nu,
+                           const std::vector<std::vector<Edge>> &graph,
+                           const std::vector<std::vector<Edge>> &grafoReverso,
+                           std::vector<std::vector<double>> &cargaAcumulada)
+{
+    int n = static_cast<int>(graph.size());
+
+    std::vector<int> distDeI, distParaJ;
+    std::vector<std::vector<int>> predIgnorado;
+    dijkstraComPredecessores(i, graph, distDeI, predIgnorado);
+    dijkstraComPredecessores(j, grafoReverso, distParaJ, predIgnorado); // dist(j->v) no reverso = dist(v->j) no original
+
+    if (distDeI[j] == std::numeric_limits<int>::max())
+        return; // não há caminho entre i e j; nada a acumular
+
+    int total = distDeI[j];
+
+    // sucessoresValidos[u] = lista de (v, índice da aresta em graph[u])
+    // que pertencem a algum caminho mínimo de i até j
+    std::vector<std::vector<std::pair<int, int>>> sucessoresValidos(n);
+    for (int u = 0; u < n; ++u)
+    {
+        if (distDeI[u] == std::numeric_limits<int>::max())
+            continue;
+        for (size_t e = 0; e < graph[u].size(); ++e)
+        {
+            int v = graph[u][e].to;
+            int w = graph[u][e].weight;
+            if (distParaJ[v] == std::numeric_limits<int>::max())
+                continue;
+            if (distDeI[u] + w + distParaJ[v] == total)
+                sucessoresValidos[u].push_back({v, static_cast<int>(e)});
+        }
+    }
+
+    // Processa os nós em ordem crescente de distância (ordem topológica do DAG restrito)
+    std::vector<int> ordem(n);
+    std::iota(ordem.begin(), ordem.end(), 0);
+    std::sort(ordem.begin(), ordem.end(),
+              [&](int a, int b) { return distDeI[a] < distDeI[b]; });
+
+    // fluxo[v] = fração do tráfego do segmento (i,j) que chega ao nó v
+    std::vector<double> fluxo(n, 0.0);
+    fluxo[i] = 1.0;
+
+    for (int u : ordem)
+    {
+        if (u == j || fluxo[u] <= 0.0 || sucessoresValidos[u].empty())
+            continue; // não propaga além do destino do segmento
+
+        double parcela = fluxo[u] / static_cast<double>(sucessoresValidos[u].size()); // divisão ECMP
+
+        for (const auto &par : sucessoresValidos[u])
+        {
+            int v = par.first;
+            int e = par.second;
+            fluxo[v] += parcela;
+            cargaAcumulada[u][e] += parcela * nu; // r(i,j,a) * nu
+        }
+    }
+}
+
+// Monta o vetor de fitness L = { lambda(a) : a em A } para o caminho p
+// completo (todos os segmentos), já ordenado de forma decrescente.
+std::vector<double> calculaVetorCarga(const std::vector<int> &p, double nu,
+                                       const std::vector<std::vector<Edge>> &graph)
+{
+    int n = static_cast<int>(graph.size());
+
+    std::vector<std::vector<double>> cargaAcumulada(n);
+    for (int u = 0; u < n; ++u)
+        cargaAcumulada[u].assign(graph[u].size(), 0.0);
+
+    std::vector<std::vector<Edge>> grafoReverso = construirGrafoReverso(graph);
+
+    for (size_t k = 1; k < p.size(); ++k)
+        acumulaCargaSegmento(p[k - 1], p[k], nu, graph, grafoReverso, cargaAcumulada);
+
+    std::vector<double> L;
+    for (int u = 0; u < n; ++u)
+        for (size_t e = 0; e < graph[u].size(); ++e)
+            L.push_back(cargaAcumulada[u][e] / graph[u][e].capacity);
+
+    std::sort(L.begin(), L.end(), std::greater<double>());
+    return L;
+}
+
+// Comparação lexicográfica de dois vetores de fitness: retorna true se
+// 'a' é MELHOR que 'b' (minimiza primeiro a maior carga, depois a
+// segunda maior, e assim sucessivamente — usado no torneio do BRKGA).
+bool melhorFitness(const std::vector<double> &a, const std::vector<double> &b)
+{
+    size_t n = std::min(a.size(), b.size());
+    for (size_t idx = 0; idx < n; ++idx)
+        if (a[idx] != b[idx])
+            return a[idx] < b[idx];
+    return a.size() < b.size();
+}
+
+// Função de fitness completa: decodifica o cromossomo, roteia a demanda
+// e devolve o vetor de carga L já ordenado (usado na comparação
+// lexicográfica). O valor de retorno (a maior carga) é apenas um resumo
+// útil para logs/relatórios.
+double fitness(const std::vector<double> &cromossomo,
+               const std::vector<std::vector<Edge>> &graph,
+               int start, int target, int maxSeg, double nu,
+               std::vector<double> &vetorCarga)
+{
+    std::vector<int> p = decoder(cromossomo, graph, start, target, maxSeg);
+    vetorCarga = calculaVetorCarga(p, nu, graph);
+    return vetorCarga.empty() ? 0.0 : vetorCarga.front();
 }
 
 int main()
 {
-    int tamanho = 7;
-    double bias = 0.7;
+    int start = 0, target = 5;
+    int maxSeg = 5;   // no máximo maxSeg-1 = 4 waypoints
+    double nu = 3.0;  // volume de tráfego da demanda
+
+    // grafo com capacidades definidas (antes todas eram 1, o que saturava
+    // qualquer arco com nu > 1)
+    const std::vector<std::vector<Edge>> graph = {
+        {{1, 1, 4}, {2, 2, 4}},              // 0
+        {{0, 1, 4}, {2, 1, 4}, {3, 3, 4}},   // 1
+        {{0, 2, 4}, {1, 1, 4}, {3, 1, 4}},   // 2
+        {{1, 3, 4}, {2, 1, 4}, {4, 2, 4}},   // 3
+        {{3, 2, 4}, {5, 1, 4}},              // 4
+        {{4, 1, 4}}                          // 5
+    };
+
+    int tamanho = static_cast<int>(graph.size()) + 1; // N = |V| + 1
     std::vector<double> cromossomo = geraCromossomo(tamanho);
 
-    std::cout << "Cromossomo gerado: ";
+    std::cout << "Cromossomo (K_size, K_0..K_" << graph.size() - 1 << "): ";
     for (double gene : cromossomo)
-    {
         std::cout << gene << " ";
-    }
     std::cout << std::endl;
-    const std::vector<std::vector<Edge>> graph = {
-        {{1, 1, 1}, {2, 2, 1}},         // 0
-        {{0, 1, 1}, {2, 1, 1}, {3, 3, 1}}, // 1
-        {{0, 2, 1}, {1, 1, 1}, {3, 1, 1}}, // 2
-        {{1, 3, 1}, {2, 1, 1}, {4, 2, 1}}, // 3
-        {{3, 2, 1}, {5, 1, 1}},         // 4
-        {{4, 1, 1}}                  // 5
-    };
-    std::vector<int> decoded = decoder(cromossomo, graph, 0, 5, 5);
-    std::vector<std::vector<int>> list;
-    for (int i = 1; i < decoded.size(); ++i)
-    {
-       list.clear();
-       findECMPRoutes(decoded[i - 1], decoded[i], graph, list);
-       std::cout << "\nCaminhos encontrados entre " << decoded[i - 1] << " e " << decoded[i] << ": ";
-       for (const auto &parents : list)
-         {
-              for (int parent : parents)
-              {
-                std::cout << parent << " ";
-              }
-              std::cout << "| ";
-         }
-    }
+
+    std::vector<int> caminho = decoder(cromossomo, graph, start, target, maxSeg);
+    std::cout << "\nCaminho em segmentos p: ";
+    for (int v : caminho)
+        std::cout << v << " ";
+    std::cout << std::endl;
+
+    std::vector<double> vetorCarga;
+    fitness(cromossomo, graph, start, target, maxSeg, nu, vetorCarga);
+
+    std::cout << "\nVetor de fitness L = {lambda(a)} (ordenado decrescente):\n";
+    for (double lambda : vetorCarga)
+        std::cout << lambda << " ";
     std::cout << std::endl;
 
     return 0;
-}
+}   
