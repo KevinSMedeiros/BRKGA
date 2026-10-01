@@ -270,15 +270,13 @@ void acumulaCargaSegmento(int i, int j, double nu,
 // Monta o vetor de fitness L = { lambda(a) : a em A } para o caminho p
 // completo (todos os segmentos), já ordenado de forma decrescente.
 std::vector<double> calculaVetorCarga(const std::vector<int> &p, double nu,
-                                       const std::vector<std::vector<Edge>> &graph)
+                                       const std::vector<std::vector<Edge>> &graph, std::vector<std::vector<Edge>> &grafoReverso)
 {
     int n = static_cast<int>(graph.size());
 
     std::vector<std::vector<double>> cargaAcumulada(n);
     for (int u = 0; u < n; ++u)
         cargaAcumulada[u].assign(graph[u].size(), 0.0);
-
-    std::vector<std::vector<Edge>> grafoReverso = construirGrafoReverso(graph);
 
     for (size_t k = 1; k < p.size(); ++k)
         acumulaCargaSegmento(p[k - 1], p[k], nu, graph, grafoReverso, cargaAcumulada);
@@ -310,11 +308,12 @@ bool melhorFitness(const std::vector<double> &a, const std::vector<double> &b)
 // útil para logs/relatórios.
 double fitness(const std::vector<double> &cromossomo,
                const std::vector<std::vector<Edge>> &graph,
+               std::vector<std::vector<Edge>> &grafoReverso,
                int start, int target, int maxSeg, double nu,
                std::vector<double> &vetorCarga)
 {
     std::vector<int> p = decoder(cromossomo, graph, start, target, maxSeg);
-    vetorCarga = calculaVetorCarga(p, nu, graph);
+    vetorCarga = calculaVetorCarga(p, nu, graph, grafoReverso);
     return vetorCarga.empty() ? 0.0 : vetorCarga.front();
 }
 
@@ -349,8 +348,10 @@ int main()
         std::cout << v << " ";
     std::cout << std::endl;
 
+    std::vector<std::vector<Edge>> grafoReverso = construirGrafoReverso(graph);
+
     std::vector<double> vetorCarga;
-    fitness(cromossomo, graph, start, target, maxSeg, nu, vetorCarga);
+    fitness(cromossomo, graph, grafoReverso, start, target, maxSeg, nu, vetorCarga);
 
     std::cout << "\nVetor de fitness L = {lambda(a)} (ordenado decrescente):\n";
     for (double lambda : vetorCarga)
