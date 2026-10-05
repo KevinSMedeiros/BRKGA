@@ -9,6 +9,9 @@
 #include <limits>
 #include <numeric>
 #include <functional>
+#include <fstream>
+#include "nlohmann/json.hpp"
+using json = nlohmann::json;
 
 struct Edge
 {
@@ -66,7 +69,7 @@ std::vector<double> crossOver(const std::vector<double> &elite, const std::vecto
 // ---------------------------------------------------------------------
 
 void dijkstraComPredecessores(int start, const std::vector<std::vector<Edge>> &graph,
-                               std::vector<int> &dist, std::vector<std::vector<int>> &parentList)
+                              std::vector<int> &dist, std::vector<std::vector<int>> &parentList)
 {
     int n = graph.size();
     dist.assign(n, std::numeric_limits<int>::max());
@@ -118,8 +121,8 @@ void dijkstraComPredecessores(int start, const std::vector<std::vector<Edge>> &g
 // ---------------------------------------------------------------------
 
 std::vector<int> decoder(const std::vector<double> &cromossomo,
-                          const std::vector<std::vector<Edge>> &graph,
-                          int start, int target, int maxSeg)
+                         const std::vector<std::vector<Edge>> &graph,
+                         int start, int target, int maxSeg)
 {
     int n = static_cast<int>(graph.size());
 
@@ -205,10 +208,10 @@ std::vector<std::vector<Edge>> construirGrafoReverso(const std::vector<std::vect
 // pertencem a ALGUM caminho mínimo de i até j especificamente, o que se
 // testa com: dist_i(u) + peso(u,v) + dist_paraJ(v) == dist_i(j), onde
 // dist_paraJ é calculado com um Dijkstra a partir de j no grafo reverso.
-void acumulaCargaSegmento(int i, int j, double nu,
-                           const std::vector<std::vector<Edge>> &graph,
-                           const std::vector<std::vector<Edge>> &grafoReverso,
-                           std::vector<std::vector<double>> &cargaAcumulada)
+void acumulaCargaSegmento(int i, int j, double volume,
+                          const std::vector<std::vector<Edge>> &graph,
+                          const std::vector<std::vector<Edge>> &grafoReverso,
+                          std::vector<std::vector<double>> &cargaAcumulada)
 {
     int n = static_cast<int>(graph.size());
 
@@ -244,7 +247,8 @@ void acumulaCargaSegmento(int i, int j, double nu,
     std::vector<int> ordem(n);
     std::iota(ordem.begin(), ordem.end(), 0);
     std::sort(ordem.begin(), ordem.end(),
-              [&](int a, int b) { return distDeI[a] < distDeI[b]; });
+              [&](int a, int b)
+              { return distDeI[a] < distDeI[b]; });
 
     // fluxo[v] = fração do tráfego do segmento (i,j) que chega ao nó v
     std::vector<double> fluxo(n, 0.0);
@@ -262,15 +266,15 @@ void acumulaCargaSegmento(int i, int j, double nu,
             int v = par.first;
             int e = par.second;
             fluxo[v] += parcela;
-            cargaAcumulada[u][e] += parcela * nu; // r(i,j,a) * nu
+            cargaAcumulada[u][e] += parcela * volume; // r(i,j,a) * volume
         }
     }
 }
 
 // Monta o vetor de fitness L = { lambda(a) : a em A } para o caminho p
 // completo (todos os segmentos), já ordenado de forma decrescente.
-std::vector<double> calculaVetorCarga(const std::vector<int> &p, double nu,
-                                       const std::vector<std::vector<Edge>> &graph, std::vector<std::vector<Edge>> &grafoReverso)
+std::vector<double> calculaVetorCarga(const std::vector<int> &p, double volume,
+                                      const std::vector<std::vector<Edge>> &graph, std::vector<std::vector<Edge>> &grafoReverso)
 {
     int n = static_cast<int>(graph.size());
 
@@ -279,7 +283,7 @@ std::vector<double> calculaVetorCarga(const std::vector<int> &p, double nu,
         cargaAcumulada[u].assign(graph[u].size(), 0.0);
 
     for (size_t k = 1; k < p.size(); ++k)
-        acumulaCargaSegmento(p[k - 1], p[k], nu, graph, grafoReverso, cargaAcumulada);
+        acumulaCargaSegmento(p[k - 1], p[k], volume, graph, grafoReverso, cargaAcumulada);
 
     std::vector<double> L;
     for (int u = 0; u < n; ++u)
@@ -309,30 +313,65 @@ bool melhorFitness(const std::vector<double> &a, const std::vector<double> &b)
 double fitness(const std::vector<double> &cromossomo,
                const std::vector<std::vector<Edge>> &graph,
                std::vector<std::vector<Edge>> &grafoReverso,
-               int start, int target, int maxSeg, double nu,
+               int start, int target, int maxSeg, double volume,
                std::vector<double> &vetorCarga)
 {
     std::vector<int> p = decoder(cromossomo, graph, start, target, maxSeg);
-    vetorCarga = calculaVetorCarga(p, nu, graph, grafoReverso);
+    vetorCarga = calculaVetorCarga(p, volume, graph, grafoReverso);
     return vetorCarga.empty() ? 0.0 : vetorCarga.front();
+}
+
+void carregaGrafoDeArquivo(const std::string &nomeArquivo, std::vector<std::vector<Edge>> &graph)
+{
+    std::ifstream arquivo(nomeArquivo);
+    if (!arquivo.is_open())
+    {
+        std::cerr << "Erro ao abrir o arquivo: " << nomeArquivo << std::endl;
+        return;
+    }
+
+    json j;
+    arquivo >> j;
+
+    int numVertices = j["nodes"].size();
+    graph.resize(numVertices);
+
+    for (const auto &aresta : j["links"])
+    {
+        int from = aresta["from"];
+        int to = aresta["to"];
+        int weight = aresta["metric"];
+        int capacity = aresta["capacity"];
+        graph[from].push_back({to, weight, capacity});
+    }
+}
+void carregaMaxSegDeArquivo(const std::string &nomeArquivo, int &maxSeg)
+{
+    std::ifstream arquivo(nomeArquivo);
+    if (!arquivo.is_open())
+    {
+        std::cerr << "Erro ao abrir o arquivo: " << nomeArquivo << std::endl;
+        return;
+    }
+
+    json j;
+    arquivo >> j;
+
+    maxSeg = j["max_segments"].get<int>();
 }
 
 int main()
 {
-    int start = 0, target = 5;
-    int maxSeg = 5;   // no máximo maxSeg-1 = 4 waypoints
-    double nu = 3.0;  // volume de tráfego da demanda
+    int start = 0, target = 15;
+    int maxSeg;
+    
+    double volume = 150.0;
 
-    // grafo com capacidades definidas (antes todas eram 1, o que saturava
-    // qualquer arco com nu > 1)
-    const std::vector<std::vector<Edge>> graph = {
-        {{1, 1, 4}, {2, 2, 4}},              // 0
-        {{0, 1, 4}, {2, 1, 4}, {3, 3, 4}},   // 1
-        {{0, 2, 4}, {1, 1, 4}, {3, 1, 4}},   // 2
-        {{1, 3, 4}, {2, 1, 4}, {4, 2, 4}},   // 3
-        {{3, 2, 4}, {5, 1, 4}},              // 4
-        {{4, 1, 4}}                          // 5
-    };
+    std::vector<std::vector<Edge>> graph;
+
+    carregaGrafoDeArquivo("setA/setA-01-net.json", graph);
+    carregaMaxSegDeArquivo("setA/setA-01-scenario.json", maxSeg);
+
 
     int tamanho = static_cast<int>(graph.size()) + 1; // N = |V| + 1
     std::vector<double> cromossomo = geraCromossomo(tamanho);
@@ -351,7 +390,7 @@ int main()
     std::vector<std::vector<Edge>> grafoReverso = construirGrafoReverso(graph);
 
     std::vector<double> vetorCarga;
-    fitness(cromossomo, graph, grafoReverso, start, target, maxSeg, nu, vetorCarga);
+    fitness(cromossomo, graph, grafoReverso, start, target, maxSeg, volume, vetorCarga);
 
     std::cout << "\nVetor de fitness L = {lambda(a)} (ordenado decrescente):\n";
     for (double lambda : vetorCarga)
@@ -359,4 +398,4 @@ int main()
     std::cout << std::endl;
 
     return 0;
-}   
+}
