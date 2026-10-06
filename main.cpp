@@ -18,6 +18,7 @@ struct Edge
     int to;
     int weight;
     int capacity;
+    int id;
 };
 
 struct Node
@@ -28,6 +29,19 @@ struct Node
     {
         return dist > other.dist;
     }
+};
+
+struct Demanda
+{
+    int source;
+    int target;
+    double volume;
+};
+
+struct Intervencao
+{
+    std::vector<int> edgeIds;
+    int t;
 };
 
 std::vector<double> geraCromossomo(int tamanho)
@@ -188,7 +202,7 @@ std::vector<std::vector<Edge>> construirGrafoReverso(const std::vector<std::vect
     std::vector<std::vector<Edge>> reverso(n);
     for (int u = 0; u < n; ++u)
         for (const auto &e : graph[u])
-            reverso[e.to].push_back({u, e.weight, e.capacity});
+            reverso[e.to].push_back({u, e.weight, e.capacity, e.id});
     return reverso;
 }
 
@@ -339,13 +353,14 @@ void carregaGrafoDeArquivo(const std::string &nomeArquivo, std::vector<std::vect
     for (const auto &aresta : j["links"])
     {
         int from = aresta["from"];
+        int id = aresta["id"].get<int>();
         int to = aresta["to"];
         int weight = aresta["metric"];
         int capacity = aresta["capacity"];
-        graph[from].push_back({to, weight, capacity});
+        graph[from].push_back({to, weight, capacity, id});
     }
 }
-void carregaMaxSegDeArquivo(const std::string &nomeArquivo, int &maxSeg)
+void carregaMaxSegEIntervencoesDeArquivo(const std::string &nomeArquivo, int &maxSeg, std::vector<Intervencao> &intervencoes)
 {
     std::ifstream arquivo(nomeArquivo);
     if (!arquivo.is_open())
@@ -356,22 +371,60 @@ void carregaMaxSegDeArquivo(const std::string &nomeArquivo, int &maxSeg)
 
     json j;
     arquivo >> j;
+    std::vector<int> edgeIds;
 
     maxSeg = j["max_segments"].get<int>();
+    for (const auto &intervencao : j["interventions"])
+    {
+        int t = intervencao["t"];
+        edgeIds.clear();
+        for (const auto &edgeId : intervencao["links"])
+        {
+            edgeIds.push_back(edgeId);
+        }
+        intervencoes.push_back({edgeIds, t});
+    }
+}
+
+void carregaDemandasDeArquivo(const std::string &nomeArquivo, std::vector<Demanda> &demandas)
+{
+    std::ifstream arquivo(nomeArquivo);
+    if (!arquivo.is_open())
+    {
+        std::cerr << "Erro ao abrir o arquivo: " << nomeArquivo << std::endl;
+        return;
+    }
+
+    json j;
+    arquivo >> j;
+    int numVolumes = j["num_time_slots"].get<int>();
+
+    for (const auto &demanda : j["demands"])
+    {
+        for (int i = 0; i < numVolumes; ++i)
+        {
+            int source = demanda["s"];
+            int target = demanda["t"];
+            double volume = demanda["v"][i].get<double>();
+            demandas.push_back({source, target, volume});
+        }
+    }
+}
+
+void executaIntervencoes(const std::vector<Intervencao> &intervencoes, std::vector<std::vector<Edge>> &graph, int tempoAtual)
+{
 }
 
 int main()
 {
-    int start = 0, target = 15;
+    std::vector<Demanda> demandas;
     int maxSeg;
-    
-    double volume = 150.0;
-
     std::vector<std::vector<Edge>> graph;
+    std::vector<Intervencao> intervencoes;
 
+    carregaDemandasDeArquivo("setA/setA-01-tm.json", demandas);
+    carregaMaxSegEIntervencoesDeArquivo("setA/setA-01-scenario.json", maxSeg, intervencoes);
     carregaGrafoDeArquivo("setA/setA-01-net.json", graph);
-    carregaMaxSegDeArquivo("setA/setA-01-scenario.json", maxSeg);
-
 
     int tamanho = static_cast<int>(graph.size()) + 1; // N = |V| + 1
     std::vector<double> cromossomo = geraCromossomo(tamanho);
@@ -381,7 +434,7 @@ int main()
         std::cout << gene << " ";
     std::cout << std::endl;
 
-    std::vector<int> caminho = decoder(cromossomo, graph, start, target, maxSeg);
+    std::vector<int> caminho = decoder(cromossomo, graph, demandas[2].source, demandas[2].target, maxSeg);
     std::cout << "\nCaminho em segmentos p: ";
     for (int v : caminho)
         std::cout << v << " ";
@@ -390,7 +443,7 @@ int main()
     std::vector<std::vector<Edge>> grafoReverso = construirGrafoReverso(graph);
 
     std::vector<double> vetorCarga;
-    fitness(cromossomo, graph, grafoReverso, start, target, maxSeg, volume, vetorCarga);
+    fitness(cromossomo, graph, grafoReverso, demandas[2].source, demandas[2].target, maxSeg, demandas[2].volume, vetorCarga);
 
     std::cout << "\nVetor de fitness L = {lambda(a)} (ordenado decrescente):\n";
     for (double lambda : vetorCarga)
