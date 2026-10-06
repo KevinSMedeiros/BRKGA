@@ -44,6 +44,12 @@ struct Intervencao
     int t;
 };
 
+struct individuo
+{
+    std::vector<double> cromossomo;
+    std::vector<double> fitness;
+};
+
 std::vector<double> geraCromossomo(int tamanho)
 {
     std::random_device rd;
@@ -415,40 +421,82 @@ void executaIntervencoes(const std::vector<Intervencao> &intervencoes, std::vect
 {
 }
 
+
+void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoPopulacao, int tamanhoElite, int tamanhoMutante, int numGeracoes, double bias, individuo &melhorIndividuo, const Demanda &demanda)
+{
+    int tamanhoCromossomo = static_cast<int>(graph.size()) + 1; // N = |V| + 1
+    std::vector<individuo> populacao(tamanhoPopulacao);
+
+    for (int i = 0; i < tamanhoPopulacao; ++i)
+    {
+        populacao[i].cromossomo = geraCromossomo(tamanhoCromossomo);
+        fitness(populacao[i].cromossomo, graph, construirGrafoReverso(graph), demanda.source, demanda.target, maxSeg, demanda.volume, populacao[i].fitness);
+    }
+
+    std::sort(populacao.begin(), populacao.end(), [](const individuo &a, const individuo &b)
+              { return melhorFitness(a.fitness, b.fitness); });
+
+    melhorIndividuo = populacao[0];
+    std::cout << "Fitness inicial: " << melhorIndividuo.fitness[0] << std::endl;
+
+    for (int geracao = 0; geracao < numGeracoes; ++geracao)
+    {
+        std::vector<individuo> novaPopulacao;
+
+        for (int i = 0; i < tamanhoElite; ++i)
+            novaPopulacao.push_back(populacao[i]);
+
+        while (static_cast<int>(novaPopulacao.size()) < tamanhoPopulacao - tamanhoMutante)
+        {
+            int idxElite = rand() % tamanhoElite;
+            int idxNonElite = tamanhoElite + rand() % (tamanhoPopulacao - tamanhoElite);
+            std::vector<double> filhoCromossomo = crossOver(populacao[idxElite].cromossomo, populacao[idxNonElite].cromossomo, bias);
+
+            individuo filho;
+            filho.cromossomo = filhoCromossomo;
+            fitness(filho.cromossomo, graph, construirGrafoReverso(graph), demanda.source, demanda.target, maxSeg, demanda.volume, filho.fitness);
+            novaPopulacao.push_back(filho);
+        }
+
+        for (int i = 0; i < tamanhoMutante; ++i)
+        {
+            std::vector<double> mutanteCromossomo = geraCromossomo(tamanhoCromossomo);
+            individuo mutante;
+            mutante.cromossomo = mutanteCromossomo;
+            fitness(mutante.cromossomo, graph, construirGrafoReverso(graph), demanda.source, demanda.target, maxSeg, demanda.volume, mutante.fitness);
+            novaPopulacao.push_back(mutante);
+        }
+
+        populacao = novaPopulacao;
+
+        std::sort(populacao.begin(), populacao.end(), [](const individuo &a, const individuo &b)
+                  { return melhorFitness(a.fitness, b.fitness); });
+        std::cout << "Geração " << geracao + 1 << ": Melhor fitness = " << std::endl;
+        for (const auto &f : populacao[0].fitness)
+            std::cout << f << " ";
+            std::cout << std::endl;
+    }
+}
 int main()
 {
     std::vector<Demanda> demandas;
     int maxSeg;
     std::vector<std::vector<Edge>> graph;
     std::vector<Intervencao> intervencoes;
+    individuo melhorIndividuo;
 
-    carregaDemandasDeArquivo("setA/setA-01-tm.json", demandas);
-    carregaMaxSegEIntervencoesDeArquivo("setA/setA-01-scenario.json", maxSeg, intervencoes);
-    carregaGrafoDeArquivo("setA/setA-01-net.json", graph);
+    carregaDemandasDeArquivo("setA/setA-02-tm.json", demandas);
+    carregaMaxSegEIntervencoesDeArquivo("setA/setA-02-scenario.json", maxSeg, intervencoes);
+    carregaGrafoDeArquivo("setA/setA-02-net.json", graph);
 
-    int tamanho = static_cast<int>(graph.size()) + 1; // N = |V| + 1
-    std::vector<double> cromossomo = geraCromossomo(tamanho);
+    if (demandas.empty())
+    {
+        std::cerr << "Nenhuma demanda carregada." << std::endl;
+        return 1;
+    }
 
-    std::cout << "Cromossomo (K_size, K_0..K_" << graph.size() - 1 << "): ";
-    for (double gene : cromossomo)
-        std::cout << gene << " ";
-    std::cout << std::endl;
 
-    std::vector<int> caminho = decoder(cromossomo, graph, demandas[2].source, demandas[2].target, maxSeg);
-    std::cout << "\nCaminho em segmentos p: ";
-    for (int v : caminho)
-        std::cout << v << " ";
-    std::cout << std::endl;
 
-    std::vector<std::vector<Edge>> grafoReverso = construirGrafoReverso(graph);
-
-    std::vector<double> vetorCarga;
-    fitness(cromossomo, graph, grafoReverso, demandas[2].source, demandas[2].target, maxSeg, demandas[2].volume, vetorCarga);
-
-    std::cout << "\nVetor de fitness L = {lambda(a)} (ordenado decrescente):\n";
-    for (double lambda : vetorCarga)
-        std::cout << lambda << " ";
-    std::cout << std::endl;
-
+    BRKGA(graph, maxSeg, 10, 4, 2, 10, 0.7, melhorIndividuo, demandas[10]);
     return 0;
 }
