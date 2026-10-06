@@ -294,7 +294,7 @@ void acumulaCargaSegmento(int i, int j, double volume,
 // Monta o vetor de fitness L = { lambda(a) : a em A } para o caminho p
 // completo (todos os segmentos), já ordenado de forma decrescente.
 std::vector<double> calculaVetorCarga(const std::vector<int> &p, double volume,
-                                      const std::vector<std::vector<Edge>> &graph, std::vector<std::vector<Edge>> &grafoReverso)
+                                      const std::vector<std::vector<Edge>> &graph, const std::vector<std::vector<Edge>> &grafoReverso)
 {
     int n = static_cast<int>(graph.size());
 
@@ -332,7 +332,7 @@ bool melhorFitness(const std::vector<double> &a, const std::vector<double> &b)
 // útil para logs/relatórios.
 double fitness(const std::vector<double> &cromossomo,
                const std::vector<std::vector<Edge>> &graph,
-               std::vector<std::vector<Edge>> &grafoReverso,
+               const std::vector<std::vector<Edge>> &grafoReverso,
                int start, int target, int maxSeg, double volume,
                std::vector<double> &vetorCarga)
 {
@@ -426,11 +426,11 @@ void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoP
 {
     int tamanhoCromossomo = static_cast<int>(graph.size()) + 1; // N = |V| + 1
     std::vector<individuo> populacao(tamanhoPopulacao);
-
+    const std::vector<std::vector<Edge>> grafoReverso = construirGrafoReverso(graph);
     for (int i = 0; i < tamanhoPopulacao; ++i)
     {
         populacao[i].cromossomo = geraCromossomo(tamanhoCromossomo);
-        fitness(populacao[i].cromossomo, graph, construirGrafoReverso(graph), demanda.source, demanda.target, maxSeg, demanda.volume, populacao[i].fitness);
+        fitness(populacao[i].cromossomo, graph, grafoReverso, demanda.source, demanda.target, maxSeg, demanda.volume, populacao[i].fitness);
     }
 
     std::sort(populacao.begin(), populacao.end(), [](const individuo &a, const individuo &b)
@@ -454,7 +454,7 @@ void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoP
 
             individuo filho;
             filho.cromossomo = filhoCromossomo;
-            fitness(filho.cromossomo, graph, construirGrafoReverso(graph), demanda.source, demanda.target, maxSeg, demanda.volume, filho.fitness);
+            fitness(filho.cromossomo, graph, grafoReverso, demanda.source, demanda.target, maxSeg, demanda.volume, filho.fitness);
             novaPopulacao.push_back(filho);
         }
 
@@ -463,7 +463,7 @@ void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoP
             std::vector<double> mutanteCromossomo = geraCromossomo(tamanhoCromossomo);
             individuo mutante;
             mutante.cromossomo = mutanteCromossomo;
-            fitness(mutante.cromossomo, graph, construirGrafoReverso(graph), demanda.source, demanda.target, maxSeg, demanda.volume, mutante.fitness);
+            fitness(mutante.cromossomo, graph, grafoReverso, demanda.source, demanda.target, maxSeg, demanda.volume, mutante.fitness);
             novaPopulacao.push_back(mutante);
         }
 
