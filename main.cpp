@@ -485,9 +485,9 @@ int main()
     std::vector<Intervencao> intervencoes;
     individuo melhorIndividuo;
 
-    carregaDemandasDeArquivo("setA/setA-02-tm.json", demandas);
-    carregaMaxSegEIntervencoesDeArquivo("setA/setA-02-scenario.json", maxSeg, intervencoes);
-    carregaGrafoDeArquivo("setA/setA-02-net.json", graph);
+    carregaDemandasDeArquivo("instances/setA/setA-02-tm.json", demandas);
+    carregaMaxSegEIntervencoesDeArquivo("instances/setA/setA-02-scenario.json", maxSeg, intervencoes);
+    carregaGrafoDeArquivo("instances/setA/setA-02-net.json", graph);
 
     if (demandas.empty())
     {
