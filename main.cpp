@@ -11,6 +11,7 @@
 #include <functional>
 #include <fstream>
 #include "nlohmann/json.hpp"
+#include <chrono>
 using json = nlohmann::json;
 
 struct Edge
@@ -50,6 +51,27 @@ struct individuo
     std::vector<double> fitness;
 };
 
+struct parametros
+{
+    int tamanhoPopulacao;
+    int tamanhoElite;
+    int tamanhoMutante;
+    int numGeracoes;
+    double bias;
+};
+struct resultado
+{
+    std::string instancia;
+    individuo melhorIndividuo;
+    std::vector<int> esquemaRoteamento;
+    long long tempoExecucao;
+    Demanda demanda;
+    parametros parametros;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Demanda, source, target, volume)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(individuo, cromossomo, fitness)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(parametros, tamanhoPopulacao, tamanhoElite, tamanhoMutante, numGeracoes, bias)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(resultado, instancia, melhorIndividuo, esquemaRoteamento, tempoExecucao, demanda, parametros)
 std::vector<double> geraCromossomo(int tamanho)
 {
     std::random_device rd;
@@ -421,7 +443,6 @@ void executaIntervencoes(const std::vector<Intervencao> &intervencoes, std::vect
 {
 }
 
-
 void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoPopulacao, int tamanhoElite, int tamanhoMutante, int numGeracoes, double bias, individuo &melhorIndividuo, const Demanda &demanda)
 {
     int tamanhoCromossomo = static_cast<int>(graph.size()) + 1; // N = |V| + 1
@@ -471,10 +492,6 @@ void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoP
 
         std::sort(populacao.begin(), populacao.end(), [](const individuo &a, const individuo &b)
                   { return melhorFitness(a.fitness, b.fitness); });
-        std::cout << "Geração " << geracao + 1 << ": Melhor fitness = " << std::endl;
-        for (const auto &f : populacao[0].fitness)
-            std::cout << f << " ";
-            std::cout << std::endl;
     }
 }
 int main()
@@ -484,19 +501,56 @@ int main()
     std::vector<std::vector<Edge>> graph;
     std::vector<Intervencao> intervencoes;
     individuo melhorIndividuo;
+    std::vector<resultado> resultados;
 
-    carregaDemandasDeArquivo("instances/setA/setA-02-tm.json", demandas);
-    carregaMaxSegEIntervencoesDeArquivo("instances/setA/setA-02-scenario.json", maxSeg, intervencoes);
-    carregaGrafoDeArquivo("instances/setA/setA-02-net.json", graph);
-
-    if (demandas.empty())
+    for (const std::string &set : {"setA", "setB"})
     {
-        std::cerr << "Nenhuma demanda carregada." << std::endl;
-        return 1;
+        for (const std::string &instance : {"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"})
+        {
+            carregaDemandasDeArquivo("instances/" + set + "/" + set + "-" + instance + "-tm.json", demandas);
+            carregaMaxSegEIntervencoesDeArquivo("instances/" + set + "/" + set + "-" + instance + "-scenario.json", maxSeg, intervencoes);
+            carregaGrafoDeArquivo("instances/" + set + "/" + set + "-" + instance + "-net.json", graph);
+
+            if (demandas.empty())
+            {
+                std::cerr << "Nenhuma demanda carregada." << std::endl;
+                return 1;
+            }
+
+            for (int i = 0; i < static_cast<int>(demandas.size()); ++i)
+            {
+                std::cout << "Demanda: " << demandas[i].source << " -> " << demandas[i].target << ", Volume: " << demandas[i].volume << std::endl;
+                auto start = std::chrono::high_resolution_clock::now();
+                BRKGA(graph, maxSeg, 10, 4, 2, 10, 0.7, melhorIndividuo, demandas[i]);
+                auto end = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                resultado resultado;
+                resultado.instancia = set + "-" + instance;
+                resultado.melhorIndividuo = melhorIndividuo;
+                resultado.tempoExecucao = static_cast<long long>(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
+                resultado.demanda = demandas[i];
+                resultado.parametros = {10, 4, 2, 10, 0.7};
+                resultado.esquemaRoteamento = decoder(melhorIndividuo.cromossomo, graph, demandas[i].source, demandas[i].target, maxSeg);
+
+                resultados.push_back(resultado);
+
+                
+            }
+            json j;
+
+            j = resultados;
+            std::ofstream outFile("resultados/" + set + "-" + instance + "-result.json");
+            if (outFile)
+            {
+                outFile << j.dump(4) << std::endl;
+                std::cout << "Data appended successfully." << std::endl;
+            }
+            else
+            {
+                std::cerr << "Error writing to file." << std::endl;
+            }
+            resultados.clear();
+        }
     }
-
-
-
-    BRKGA(graph, maxSeg, 10, 4, 2, 10, 0.7, melhorIndividuo, demandas[10]);
     return 0;
 }
