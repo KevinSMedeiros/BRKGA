@@ -414,7 +414,7 @@ void carregaMaxSegEIntervencoesDeArquivo(const std::string &nomeArquivo, int &ma
     }
 }
 
-void carregaDemandasDeArquivo(const std::string &nomeArquivo, std::vector<Demanda> &demandas)
+void carregaDemandasDeArquivo(const std::string &nomeArquivo, std::vector<Demanda> &demandas, int &numVolumes)
 {
     std::ifstream arquivo(nomeArquivo);
     if (!arquivo.is_open())
@@ -425,7 +425,7 @@ void carregaDemandasDeArquivo(const std::string &nomeArquivo, std::vector<Demand
 
     json j;
     arquivo >> j;
-    int numVolumes = j["num_time_slots"].get<int>();
+    numVolumes = j["num_time_slots"].get<int>();
 
     for (const auto &demanda : j["demands"])
     {
@@ -496,18 +496,18 @@ void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoP
 }
 int main()
 {
-    std::vector<Demanda> demandas;
-    int maxSeg;
-    std::vector<std::vector<Edge>> graph;
-    std::vector<Intervencao> intervencoes;
-    individuo melhorIndividuo;
-    std::vector<resultado> resultados;
-
-    for (const std::string &set : {"setA", "setB"})
+    for (const std::string &set : {"setA", "setB", "setC", "setX"})
     {
         for (const std::string &instance : {"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"})
         {
-            carregaDemandasDeArquivo("instances/" + set + "/" + set + "-" + instance + "-tm.json", demandas);
+            std::vector<Demanda> demandas;
+            int maxSeg;
+            std::vector<std::vector<Edge>> graph;
+            std::vector<Intervencao> intervencoes;
+            individuo melhorIndividuo;
+            std::vector<resultado> resultados;
+            int numVolumes;
+            carregaDemandasDeArquivo("instances/" + set + "/" + set + "-" + instance + "-tm.json", demandas, numVolumes);
             carregaMaxSegEIntervencoesDeArquivo("instances/" + set + "/" + set + "-" + instance + "-scenario.json", maxSeg, intervencoes);
             carregaGrafoDeArquivo("instances/" + set + "/" + set + "-" + instance + "-net.json", graph);
 
@@ -517,24 +517,26 @@ int main()
                 return 1;
             }
 
-            for (int i = 0; i < static_cast<int>(demandas.size()); ++i)
+            srand(time(nullptr));
+            for (int i = 0; i < 5; ++i)
             {
-                std::cout << "Demanda: " << demandas[i].source << " -> " << demandas[i].target << ", Volume: " << demandas[i].volume << std::endl;
+                int demandaIndex = i * numVolumes;
+                std::cout << "Demanda: " << demandas[demandaIndex].source << " -> " << demandas[demandaIndex].target << ", Volume: " << demandas[demandaIndex].volume << std::endl;
                 auto start = std::chrono::high_resolution_clock::now();
-                BRKGA(graph, maxSeg, 10, 4, 2, 10, 0.7, melhorIndividuo, demandas[i]);
+                BRKGA(graph, maxSeg, 10, 4, 2, 10, 0.7, melhorIndividuo, demandas[demandaIndex]);
                 auto end = std::chrono::high_resolution_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
                 resultado resultado;
                 resultado.instancia = set + "-" + instance;
                 resultado.melhorIndividuo = melhorIndividuo;
                 resultado.tempoExecucao = static_cast<long long>(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
-                resultado.demanda = demandas[i];
+                resultado.demanda = demandas[demandaIndex];
                 resultado.parametros = {10, 4, 2, 10, 0.7};
-                resultado.esquemaRoteamento = decoder(melhorIndividuo.cromossomo, graph, demandas[i].source, demandas[i].target, maxSeg);
+                resultado.esquemaRoteamento = decoder(melhorIndividuo.cromossomo, graph, demandas[demandaIndex].source, demandas[demandaIndex].target, maxSeg);
 
                 resultados.push_back(resultado);
 
-                
+                std::cout << "Tempo de execução: " << resultado.tempoExecucao << " ms" << std::endl;
             }
             json j;
 
