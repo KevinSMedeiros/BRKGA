@@ -463,7 +463,6 @@ void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoP
     for (int geracao = 0; geracao < numGeracoes; ++geracao)
     {
         std::vector<individuo> novaPopulacao;
-
         for (int i = 0; i < tamanhoElite; ++i)
             novaPopulacao.push_back(populacao[i]);
 
@@ -489,7 +488,8 @@ void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoP
         }
 
         populacao = novaPopulacao;
-
+        melhorIndividuo = populacao[0];
+        std::cout << "Geração " << geracao + 1 << ": Melhor fitness = " << melhorIndividuo.fitness[0] << std::endl;
         std::sort(populacao.begin(), populacao.end(), [](const individuo &a, const individuo &b)
                   { return melhorFitness(a.fitness, b.fitness); });
     }
