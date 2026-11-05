@@ -62,16 +62,15 @@ struct parametros
 struct resultado
 {
     std::string instancia;
-    individuo melhorIndividuo;
+    std::vector<double> fitness;
     std::vector<int> esquemaRoteamento;
     long long tempoExecucao;
     Demanda demanda;
     parametros parametros;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Demanda, source, target, volume)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(individuo, cromossomo, fitness)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(parametros, tamanhoPopulacao, tamanhoElite, tamanhoMutante, numGeracoes, bias)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(resultado, instancia, melhorIndividuo, esquemaRoteamento, tempoExecucao, demanda, parametros)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(resultado, instancia, fitness, esquemaRoteamento, tempoExecucao, demanda, parametros)
 std::vector<double> geraCromossomo(int tamanho)
 {
     std::random_device rd;
@@ -149,6 +148,38 @@ void dijkstraComPredecessores(int start, const std::vector<std::vector<Edge>> &g
     }
 }
 
+void floydWarshall(const std::vector<std::vector<Edge>> &graph, std::vector<std::vector<int>> &dist)
+{
+    int n = graph.size();
+    dist.assign(n, std::vector<int>(n, std::numeric_limits<int>::max()));
+
+    for (int u = 0; u < n; ++u)
+    {
+        dist[u][u] = 0;
+        for (const auto &edge : graph[u])
+        {
+            dist[u][edge.to] = edge.weight;
+        }
+    }
+
+    for (int k = 0; k < n; ++k)
+    {
+        for (int i = 0; i < n; ++i)
+        {
+            if (dist[i][k] == std::numeric_limits<int>::max())
+                continue;
+            for (int j = 0; j < n; ++j)
+            {
+                if (dist[k][j] == std::numeric_limits<int>::max())
+                    continue;
+                if (dist[i][k] + dist[k][j] < dist[i][j])
+                {
+                    dist[i][j] = dist[i][k] + dist[k][j];
+                }
+            }
+        }
+    }
+}
 // ---------------------------------------------------------------------
 // Decoder BRKGA para demanda única estática (Algoritmo 1 do texto)
 //
@@ -252,35 +283,30 @@ std::vector<std::vector<Edge>> construirGrafoReverso(const std::vector<std::vect
 // dist_paraJ é calculado com um Dijkstra a partir de j no grafo reverso.
 void acumulaCargaSegmento(int i, int j, double volume,
                           const std::vector<std::vector<Edge>> &graph,
-                          const std::vector<std::vector<Edge>> &grafoReverso,
-                          std::vector<std::vector<double>> &cargaAcumulada)
+                          std::vector<std::vector<double>> &cargaAcumulada,
+                          const std::vector<std::vector<int>> &distancias)
 {
     int n = static_cast<int>(graph.size());
 
-    std::vector<int> distDeI, distParaJ;
-    std::vector<std::vector<int>> predIgnorado;
-    dijkstraComPredecessores(i, graph, distDeI, predIgnorado);
-    dijkstraComPredecessores(j, grafoReverso, distParaJ, predIgnorado); // dist(j->v) no reverso = dist(v->j) no original
-
-    if (distDeI[j] == std::numeric_limits<int>::max())
+    if (distancias[i][j] == std::numeric_limits<int>::max())
         return; // não há caminho entre i e j; nada a acumular
 
-    int total = distDeI[j];
+    int total = distancias[i][j];
 
     // sucessoresValidos[u] = lista de (v, índice da aresta em graph[u])
     // que pertencem a algum caminho mínimo de i até j
     std::vector<std::vector<std::pair<int, int>>> sucessoresValidos(n);
     for (int u = 0; u < n; ++u)
     {
-        if (distDeI[u] == std::numeric_limits<int>::max())
+        if (distancias[i][u] == std::numeric_limits<int>::max())
             continue;
         for (size_t e = 0; e < graph[u].size(); ++e)
         {
             int v = graph[u][e].to;
             int w = graph[u][e].weight;
-            if (distParaJ[v] == std::numeric_limits<int>::max())
+            if (distancias[v][j] == std::numeric_limits<int>::max())
                 continue;
-            if (distDeI[u] + w + distParaJ[v] == total)
+            if (distancias[i][u] + w + distancias[v][j] == total)
                 sucessoresValidos[u].push_back({v, static_cast<int>(e)});
         }
     }
@@ -290,7 +316,7 @@ void acumulaCargaSegmento(int i, int j, double volume,
     std::iota(ordem.begin(), ordem.end(), 0);
     std::sort(ordem.begin(), ordem.end(),
               [&](int a, int b)
-              { return distDeI[a] < distDeI[b]; });
+              { return distancias[i][a] < distancias[i][b]; });
 
     // fluxo[v] = fração do tráfego do segmento (i,j) que chega ao nó v
     std::vector<double> fluxo(n, 0.0);
@@ -316,7 +342,8 @@ void acumulaCargaSegmento(int i, int j, double volume,
 // Monta o vetor de fitness L = { lambda(a) : a em A } para o caminho p
 // completo (todos os segmentos), já ordenado de forma decrescente.
 std::vector<double> calculaVetorCarga(const std::vector<int> &p, double volume,
-                                      const std::vector<std::vector<Edge>> &graph, const std::vector<std::vector<Edge>> &grafoReverso)
+                                      const std::vector<std::vector<Edge>> &graph,
+                                      const std::vector<std::vector<int>> &distancias)
 {
     int n = static_cast<int>(graph.size());
 
@@ -325,11 +352,16 @@ std::vector<double> calculaVetorCarga(const std::vector<int> &p, double volume,
         cargaAcumulada[u].assign(graph[u].size(), 0.0);
 
     for (size_t k = 1; k < p.size(); ++k)
-        acumulaCargaSegmento(p[k - 1], p[k], volume, graph, grafoReverso, cargaAcumulada);
+        acumulaCargaSegmento(p[k - 1], p[k], volume, graph, cargaAcumulada, distancias);
 
     std::vector<double> L;
     for (int u = 0; u < n; ++u)
         for (size_t e = 0; e < graph[u].size(); ++e)
+            if(cargaAcumulada[u][e] == std::numeric_limits<double>::infinity()){
+                std::cout << "Atenção: carga acumulada infinita para aresta " << graph[u][e].id << " de " << u << " para " << graph[u][e].to << std::endl;
+                L.push_back(0.0);
+            }
+            else
             L.push_back(cargaAcumulada[u][e] / graph[u][e].capacity);
 
     std::sort(L.begin(), L.end(), std::greater<double>());
@@ -354,12 +386,12 @@ bool melhorFitness(const std::vector<double> &a, const std::vector<double> &b)
 // útil para logs/relatórios.
 double fitness(const std::vector<double> &cromossomo,
                const std::vector<std::vector<Edge>> &graph,
-               const std::vector<std::vector<Edge>> &grafoReverso,
+               const std::vector<std::vector<int>> &distancias,
                int start, int target, int maxSeg, double volume,
                std::vector<double> &vetorCarga)
 {
     std::vector<int> p = decoder(cromossomo, graph, start, target, maxSeg);
-    vetorCarga = calculaVetorCarga(p, volume, graph, grafoReverso);
+    vetorCarga = calculaVetorCarga(p, volume, graph, distancias);
     return vetorCarga.empty() ? 0.0 : vetorCarga.front();
 }
 
@@ -445,20 +477,19 @@ void executaIntervencoes(const std::vector<Intervencao> &intervencoes, std::vect
 
 void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoPopulacao, int tamanhoElite, int tamanhoMutante, int numGeracoes, double bias, individuo &melhorIndividuo, const Demanda &demanda)
 {
-    int tamanhoCromossomo = static_cast<int>(graph.size()) + 1; // N = |V| + 1
+    int tamanhoCromossomo = static_cast<int>(graph.size()) + 1;
     std::vector<individuo> populacao(tamanhoPopulacao);
-    const std::vector<std::vector<Edge>> grafoReverso = construirGrafoReverso(graph);
+
+    std::vector<std::vector<int>> distancias;
+    floydWarshall(graph, distancias);
     for (int i = 0; i < tamanhoPopulacao; ++i)
     {
         populacao[i].cromossomo = geraCromossomo(tamanhoCromossomo);
-        fitness(populacao[i].cromossomo, graph, grafoReverso, demanda.source, demanda.target, maxSeg, demanda.volume, populacao[i].fitness);
+        fitness(populacao[i].cromossomo, graph, distancias, demanda.source, demanda.target, maxSeg, demanda.volume, populacao[i].fitness);
     }
-
-    std::sort(populacao.begin(), populacao.end(), [](const individuo &a, const individuo &b)
+     std::sort(populacao.begin(), populacao.end(), [](const individuo &a, const individuo &b)
               { return melhorFitness(a.fitness, b.fitness); });
-
-    melhorIndividuo = populacao[0];
-    std::cout << "Fitness inicial: " << melhorIndividuo.fitness[0] << std::endl;
+     melhorIndividuo = populacao[0];
 
     for (int geracao = 0; geracao < numGeracoes; ++geracao)
     {
@@ -474,7 +505,7 @@ void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoP
 
             individuo filho;
             filho.cromossomo = filhoCromossomo;
-            fitness(filho.cromossomo, graph, grafoReverso, demanda.source, demanda.target, maxSeg, demanda.volume, filho.fitness);
+            fitness(filho.cromossomo, graph, distancias, demanda.source, demanda.target, maxSeg, demanda.volume, filho.fitness);
             novaPopulacao.push_back(filho);
         }
 
@@ -483,22 +514,21 @@ void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoP
             std::vector<double> mutanteCromossomo = geraCromossomo(tamanhoCromossomo);
             individuo mutante;
             mutante.cromossomo = mutanteCromossomo;
-            fitness(mutante.cromossomo, graph, grafoReverso, demanda.source, demanda.target, maxSeg, demanda.volume, mutante.fitness);
+            fitness(mutante.cromossomo, graph, distancias, demanda.source, demanda.target, maxSeg, demanda.volume, mutante.fitness);
             novaPopulacao.push_back(mutante);
         }
 
         populacao = novaPopulacao;
         melhorIndividuo = populacao[0];
-        std::cout << "Geração " << geracao + 1 << ": Melhor fitness = " << melhorIndividuo.fitness[0] << std::endl;
         std::sort(populacao.begin(), populacao.end(), [](const individuo &a, const individuo &b)
                   { return melhorFitness(a.fitness, b.fitness); });
     }
 }
 int main()
 {
-    for (const std::string &set : {"setA", "setB", "setC", "setX"})
+    for (const std::string &set : {"setB"}) //"setA", "setB", "setC", "setX"
     {
-        for (const std::string &instance : {"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"})
+        for (const std::string &instance : { "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"}) 
         {
             std::vector<Demanda> demandas;
             int maxSeg;
@@ -520,20 +550,20 @@ int main()
             srand(time(nullptr));
             for (int i = 0; i < 5; ++i)
             {
-                int demandaIndex = i * numVolumes;
-                std::cout << "Demanda: " << demandas[demandaIndex].source << " -> " << demandas[demandaIndex].target << ", Volume: " << demandas[demandaIndex].volume << std::endl;
+                int indiceDemanda = i * numVolumes;
+                std::cout << "Demanda: " << demandas[indiceDemanda].source << " -> " << demandas[indiceDemanda].target << ", Volume: " << demandas[indiceDemanda].volume << std::endl;
+                std::cout << "Instância: " << set << "-" << instance << std::endl;
                 auto start = std::chrono::high_resolution_clock::now();
-                BRKGA(graph, maxSeg, 10, 4, 2, 10, 0.7, melhorIndividuo, demandas[demandaIndex]);
+                BRKGA(graph, maxSeg, 100, 20, 30, 1000, 0.7, melhorIndividuo, demandas[indiceDemanda]);
                 auto end = std::chrono::high_resolution_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
                 resultado resultado;
                 resultado.instancia = set + "-" + instance;
-                resultado.melhorIndividuo = melhorIndividuo;
+                resultado.fitness = melhorIndividuo.fitness;
                 resultado.tempoExecucao = static_cast<long long>(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
-                resultado.demanda = demandas[demandaIndex];
-                resultado.parametros = {10, 4, 2, 10, 0.7};
-                resultado.esquemaRoteamento = decoder(melhorIndividuo.cromossomo, graph, demandas[demandaIndex].source, demandas[demandaIndex].target, maxSeg);
-
+                resultado.demanda = demandas[indiceDemanda];
+                resultado.parametros = {100, 20, 30, 1000, 0.7};
+                resultado.esquemaRoteamento = decoder(melhorIndividuo.cromossomo, graph, demandas[indiceDemanda].source, demandas[indiceDemanda].target, maxSeg);
                 resultados.push_back(resultado);
 
                 std::cout << "Tempo de execução: " << resultado.tempoExecucao << " ms" << std::endl;
