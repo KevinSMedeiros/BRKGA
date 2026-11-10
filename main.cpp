@@ -501,19 +501,17 @@ void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoP
         {
             int idxElite = rand() % tamanhoElite;
             int idxNonElite = tamanhoElite + rand() % (tamanhoPopulacao - tamanhoElite);
-            std::vector<double> filhoCromossomo = crossOver(populacao[idxElite].cromossomo, populacao[idxNonElite].cromossomo, bias);
-
             individuo filho;
-            filho.cromossomo = filhoCromossomo;
+
+            filho.cromossomo = crossOver(populacao[idxElite].cromossomo, populacao[idxNonElite].cromossomo, bias);
             fitness(filho.cromossomo, graph, distancias, demanda.source, demanda.target, maxSeg, demanda.volume, filho.fitness);
             novaPopulacao.push_back(filho);
         }
 
         for (int i = 0; i < tamanhoMutante; ++i)
         {
-            std::vector<double> mutanteCromossomo = geraCromossomo(tamanhoCromossomo);
             individuo mutante;
-            mutante.cromossomo = mutanteCromossomo;
+            mutante.cromossomo = geraCromossomo(tamanhoCromossomo);
             fitness(mutante.cromossomo, graph, distancias, demanda.source, demanda.target, maxSeg, demanda.volume, mutante.fitness);
             novaPopulacao.push_back(mutante);
         }
@@ -526,9 +524,9 @@ void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoP
 }
 int main()
 {
-    for (const std::string &set : {"setB"}) //"setA", "setB", "setC", "setX"
+    for (const std::string &set : {"setX"}) //"setA", "setB", "setC", "setX"
     {
-        for (const std::string &instance : { "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"}) 
+        for (const std::string &instance : { "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"}) 
         {
             std::vector<Demanda> demandas;
             int maxSeg;
