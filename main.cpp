@@ -529,6 +529,7 @@ void greedy(const std::vector<std::vector<Edge>> &graph, int maxSeg, Demanda &de
     std::vector<std::vector<int>> distancias;
     floydWarshall(graph, distancias);
     melhorCaminhoSegmentos = {demanda.source, demanda.target};
+
     fitness(melhorCaminhoSegmentos, graph, distancias, demanda.volume, bestFitness);
         std::vector<int> bomCaminhoSegmentos = {demanda.source, demanda.target};
         std::vector<double> bomFitness = {std::numeric_limits<int>::max()};
@@ -579,9 +580,9 @@ void greedy(const std::vector<std::vector<Edge>> &graph, int maxSeg, Demanda &de
 }
 int main()
 {
-    for (const std::string &set : {"setA", "setB", "setC", "setX"})
+    for (const std::string &set : {"setc"})
     {
-        for (const std::string &instance : {"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"})
+        for (const std::string &instance : {"12"})
         {
             std::vector<Demanda> demandas;
             int maxSeg;
@@ -629,7 +630,7 @@ int main()
             json j;
 
             j = resultados;
-            // std::ofstream outFile("resultados/" + set + "-" + instance + "-result.json");
+            //std::ofstream outFile("resultados/" + set + "-" + instance + "-result.json");
             std::ofstream outFile("resultados-greedy/" + set + "-" + instance + "-result.json");
             if (outFile)
             {
