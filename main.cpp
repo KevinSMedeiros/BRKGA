@@ -10,6 +10,7 @@
 #include <numeric>
 #include <functional>
 #include <fstream>
+#include <cmath>
 #include "nlohmann/json.hpp"
 #include <chrono>
 using json = nlohmann::json;
@@ -18,7 +19,7 @@ struct Edge
 {
     int to;
     int weight;
-    int capacity;
+    double capacity;
     int id;
 };
 
@@ -363,8 +364,12 @@ std::vector<double> calculaVetorCarga(const std::vector<int> &p, double volume,
                 L.push_back(0.0);
             }
             else
-                L.push_back(cargaAcumulada[u][e] / graph[u][e].capacity);
-
+            {
+                double utilizacao = cargaAcumulada[u][e] / graph[u][e].capacity;
+                if (std::isnan(utilizacao))
+                    std::cout << "Atenção: fitness NaN para aresta " << graph[u][e].id << " de " << u << " para " << graph[u][e].to << std::endl;
+                L.push_back(utilizacao);
+            }
     std::sort(L.begin(), L.end(), std::greater<double>());
     return L;
 }
@@ -390,7 +395,6 @@ double fitness(std::vector<int> caminhoSegmentos,
                const std::vector<std::vector<int>> &distancias, double volume,
                std::vector<double> &vetorCarga)
 {
-    ;
     vetorCarga = calculaVetorCarga(caminhoSegmentos, volume, graph, distancias);
     return vetorCarga.empty() ? 0.0 : vetorCarga.front();
 }
@@ -416,7 +420,7 @@ void carregaGrafoDeArquivo(const std::string &nomeArquivo, std::vector<std::vect
         int id = aresta["id"].get<int>();
         int to = aresta["to"];
         int weight = aresta["metric"];
-        int capacity = aresta["capacity"];
+        double capacity = aresta["capacity"];
         graph[from].push_back({to, weight, capacity, id});
     }
 }
@@ -532,13 +536,13 @@ void greedy(const std::vector<std::vector<Edge>> &graph, int maxSeg, Demanda &de
 
     fitness(melhorCaminhoSegmentos, graph, distancias, demanda.volume, bestFitness);
         std::vector<int> bomCaminhoSegmentos = {demanda.source, demanda.target};
-        std::vector<double> bomFitness = {std::numeric_limits<int>::max()};
+        std::vector<double> bomFitness = {std::numeric_limits<double>::max()};
     for (int i = 1; i < maxSeg; ++i)
     {
 
         std::vector<int> caminhoSegmentos = bomCaminhoSegmentos;
         std::vector<double> fitnessSolucao;
-        bomFitness = {std::numeric_limits<int>::max()};
+        bomFitness = {std::numeric_limits<double>::max()};
         for (int j = 0; j < graph.size(); ++j)
         {
             if (std::find(caminhoSegmentos.begin(), caminhoSegmentos.end(), j) != caminhoSegmentos.end())
@@ -580,9 +584,9 @@ void greedy(const std::vector<std::vector<Edge>> &graph, int maxSeg, Demanda &de
 }
 int main()
 {
-    for (const std::string &set : {"setc"})
+    for (const std::string &set : {"setA"})
     {
-        for (const std::string &instance : {"12"})
+        for (const std::string &instance : {"08"})
         {
             std::vector<Demanda> demandas;
             int maxSeg;
@@ -627,21 +631,32 @@ int main()
 
                 std::cout << "Tempo de execução: " << resultado.tempoExecucao << " ms" << std::endl;
             }
-            json j;
+            // json j;
 
-            j = resultados;
-            //std::ofstream outFile("resultados/" + set + "-" + instance + "-result.json");
-            std::ofstream outFile("resultados-greedy/" + set + "-" + instance + "-result.json");
-            if (outFile)
+            // j = resultados;
+            // //std::ofstream outFile("resultados/" + set + "-" + instance + "-result.json");
+            // std::ofstream outFile("resultados-greedy/" + set + "-" + instance + "-result.json");
+            // if (outFile)
+            // {
+            //     outFile << j.dump(4) << std::endl;
+            //     std::cout << "Data appended successfully." << std::endl;
+            // }
+            // else
+            // {
+            //     std::cerr << "Error writing to file." << std::endl;
+            // }
+            // resultados.clear();
+            std::vector<std::vector<int>> distancias;
+            std::vector<double> fitnessResultados;
+            floydWarshall(graph, distancias);
+            fitness({110, 111, 117, 76, 145, 53}, graph, distancias, 1.0, fitnessResultados);
+
+            std::cout << "Fitness para o caminho [110, 111, 117, 76, 145, 53]: ";
+            for (const auto &f : fitnessResultados)
             {
-                outFile << j.dump(4) << std::endl;
-                std::cout << "Data appended successfully." << std::endl;
+                std::cout << f << " ";
             }
-            else
-            {
-                std::cerr << "Error writing to file." << std::endl;
-            }
-            resultados.clear();
+            std::cout << std::endl;
         }
     }
     return 0;
