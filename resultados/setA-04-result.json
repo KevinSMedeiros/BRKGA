@@ -7,7 +7,7 @@
         },
         "esquemaRoteamento": [
             39,
-            27,
+            42,
             18,
             2,
             1
@@ -265,6 +265,7 @@
             0.0
         ],
         "instancia": "setA-04",
+        "numWayPoints": 3,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -272,7 +273,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 9134
+        "tempoExecucao": 15773
     },
     {
         "demanda": {
@@ -537,6 +538,7 @@
             0.0
         ],
         "instancia": "setA-04",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -544,7 +546,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 6130
+        "tempoExecucao": 11025
     },
     {
         "demanda": {
@@ -554,7 +556,6 @@
         },
         "esquemaRoteamento": [
             38,
-            0,
             6
         ],
         "fitness": [
@@ -810,6 +811,7 @@
             0.0
         ],
         "instancia": "setA-04",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -817,7 +819,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 6560
+        "tempoExecucao": 11598
     },
     {
         "demanda": {
@@ -1083,6 +1085,7 @@
             0.0
         ],
         "instancia": "setA-04",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -1090,7 +1093,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 7315
+        "tempoExecucao": 12987
     },
     {
         "demanda": {
@@ -1358,6 +1361,7 @@
             0.0
         ],
         "instancia": "setA-04",
+        "numWayPoints": 3,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -1365,6 +1369,6 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 8804
+        "tempoExecucao": 15450
     }
 ]

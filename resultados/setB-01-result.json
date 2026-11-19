@@ -7,9 +7,8 @@
         },
         "esquemaRoteamento": [
             150,
-            34,
-            61,
-            26,
+            92,
+            148,
             8
         ],
         "fitness": [
@@ -18,15 +17,15 @@
             9.893048128342245e-08,
             8.68544600938967e-08,
             8.505747126436782e-08,
-            4.933333333333333e-08,
-            3.280141843971631e-08,
-            1.7926356589147287e-08,
-            1.737089201877934e-08,
-            1.4670896114195082e-08,
-            1.415996938384998e-08,
-            1.3653136531365313e-08,
-            1.2842762929538353e-08,
+            1.5539689206215874e-08,
+            1.158422041327489e-08,
             8.01212646167172e-09,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
             0.0,
             0.0,
             0.0,
@@ -879,6 +878,7 @@
             0.0
         ],
         "instancia": "setB-01",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -886,7 +886,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 41898
+        "tempoExecucao": 58368
     },
     {
         "demanda": {
@@ -1767,6 +1767,7 @@
             0.0
         ],
         "instancia": "setB-01",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -1774,7 +1775,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 38122
+        "tempoExecucao": 75576
     },
     {
         "demanda": {
@@ -1784,7 +1785,6 @@
         },
         "esquemaRoteamento": [
             93,
-            9,
             34,
             146
         ],
@@ -2655,6 +2655,7 @@
             0.0
         ],
         "instancia": "setB-01",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -2662,7 +2663,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 37845
+        "tempoExecucao": 66179
     },
     {
         "demanda": {
@@ -2672,28 +2673,27 @@
         },
         "esquemaRoteamento": [
             123,
-            211,
             139,
             19
         ],
         "fitness": [
             0.000745,
+            3.840206185567011e-06,
             3.6881188118811883e-06,
             3.4813084112149534e-06,
             3.078512396694215e-06,
             2.4833333333333334e-06,
             2.3575949367088606e-06,
-            2.299382716049383e-06,
-            1.935064935064935e-06,
-            1.9102564102564102e-06,
-            1.728538283062645e-06,
-            1.728538283062645e-06,
-            1.7126436781609195e-06,
             1.2713310580204779e-06,
             1.245819397993311e-06,
             1.2416666666666667e-06,
             1.0734870317002881e-06,
-            1.9063459570112588e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
             0.0,
             0.0,
             0.0,
@@ -3543,6 +3543,7 @@
             0.0
         ],
         "instancia": "setB-01",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -3550,24 +3551,20 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 35937
+        "tempoExecucao": 65793
     },
     {
         "demanda": {
             "source": 89,
             "target": 139,
-            "volume": 0.0
+            "volume": 0.1
         },
         "esquemaRoteamento": [
             89,
-            126,
-            79,
-            218,
-            195,
             139
         ],
         "fitness": [
-            0.0,
+            0.0002717391304347826,
             0.0,
             0.0,
             0.0,
@@ -4433,6 +4430,7 @@
             0.0
         ],
         "instancia": "setB-01",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -4440,6 +4438,6 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 45806
+        "tempoExecucao": 55389
     }
 ]

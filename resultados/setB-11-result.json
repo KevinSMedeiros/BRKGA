@@ -5049,6 +5049,7 @@
             0.0
         ],
         "instancia": "setB-11",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -5056,7 +5057,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 382791
+        "tempoExecucao": 359363
     },
     {
         "demanda": {
@@ -10108,6 +10109,7 @@
             0.0
         ],
         "instancia": "setB-11",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -10115,7 +10117,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 324200
+        "tempoExecucao": 391410
     },
     {
         "demanda": {
@@ -15167,6 +15169,7 @@
             0.0
         ],
         "instancia": "setB-11",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -15174,7 +15177,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 377092
+        "tempoExecucao": 343625
     },
     {
         "demanda": {
@@ -20226,6 +20229,7 @@
             0.0
         ],
         "instancia": "setB-11",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -20233,7 +20237,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 327471
+        "tempoExecucao": 375454
     },
     {
         "demanda": {
@@ -20243,7 +20247,7 @@
         },
         "esquemaRoteamento": [
             24,
-            497,
+            781,
             1093,
             19
         ],
@@ -20252,12 +20256,12 @@
             0.00451527485380117,
             8.091720813246699e-05,
             7.409904030710173e-05,
+            7.000743494423792e-05,
             6.934722471708282e-05,
             6.811150317572336e-05,
+            6.623022816949734e-05,
             6.504734625105307e-05,
             6.455246216871499e-05,
-            0.0,
-            0.0,
             0.0,
             0.0,
             0.0,
@@ -25286,6 +25290,7 @@
             0.0
         ],
         "instancia": "setB-11",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -25293,6 +25298,6 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 226955
+        "tempoExecucao": 297811
     }
 ]

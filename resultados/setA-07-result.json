@@ -514,6 +514,7 @@
             0.0
         ],
         "instancia": "setA-07",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -521,7 +522,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 15707
+        "tempoExecucao": 26913
     },
     {
         "demanda": {
@@ -531,8 +532,8 @@
         },
         "esquemaRoteamento": [
             71,
-            64,
-            74,
+            55,
+            48,
             61
         ],
         "fitness": [
@@ -1038,6 +1039,7 @@
             0.0
         ],
         "instancia": "setA-07",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -1045,7 +1047,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 15396
+        "tempoExecucao": 26273
     },
     {
         "demanda": {
@@ -1055,7 +1057,6 @@
         },
         "esquemaRoteamento": [
             1,
-            11,
             7
         ],
         "fitness": [
@@ -1561,6 +1562,7 @@
             0.0
         ],
         "instancia": "setA-07",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -1568,7 +1570,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 12201
+        "tempoExecucao": 21423
     },
     {
         "demanda": {
@@ -1578,7 +1580,7 @@
         },
         "esquemaRoteamento": [
             34,
-            70,
+            60,
             36,
             69
         ],
@@ -2085,6 +2087,7 @@
             0.0
         ],
         "instancia": "setA-07",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -2092,7 +2095,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 17775
+        "tempoExecucao": 27179
     },
     {
         "demanda": {
@@ -2607,6 +2610,7 @@
             0.0
         ],
         "instancia": "setA-07",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -2614,6 +2618,6 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 12117
+        "tempoExecucao": 20775
     }
 ]

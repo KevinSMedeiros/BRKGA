@@ -5049,6 +5049,7 @@
             0.0
         ],
         "instancia": "setX-11",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -5056,7 +5057,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 202926
+        "tempoExecucao": 401153
     },
     {
         "demanda": {
@@ -10108,6 +10109,7 @@
             0.0
         ],
         "instancia": "setX-11",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -10115,7 +10117,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 203878
+        "tempoExecucao": 357803
     },
     {
         "demanda": {
@@ -15167,6 +15169,7 @@
             0.0
         ],
         "instancia": "setX-11",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -15174,7 +15177,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 208745
+        "tempoExecucao": 410891
     },
     {
         "demanda": {
@@ -20226,6 +20229,7 @@
             0.0
         ],
         "instancia": "setX-11",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -20233,7 +20237,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 211474
+        "tempoExecucao": 410418
     },
     {
         "demanda": {
@@ -25285,6 +25289,7 @@
             0.0
         ],
         "instancia": "setX-11",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -25292,6 +25297,6 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 212305
+        "tempoExecucao": 397886
     }
 ]

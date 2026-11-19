@@ -263,6 +263,7 @@
             0.0
         ],
         "instancia": "setA-03",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -270,7 +271,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 10105
+        "tempoExecucao": 12728
     },
     {
         "demanda": {
@@ -536,6 +537,7 @@
             0.0
         ],
         "instancia": "setA-03",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -543,7 +545,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 7544
+        "tempoExecucao": 12877
     },
     {
         "demanda": {
@@ -810,6 +812,7 @@
             0.0
         ],
         "instancia": "setA-03",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -817,7 +820,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 7960
+        "tempoExecucao": 15036
     },
     {
         "demanda": {
@@ -828,7 +831,7 @@
         "esquemaRoteamento": [
             7,
             42,
-            16,
+            5,
             33,
             40
         ],
@@ -1085,6 +1088,7 @@
             0.0
         ],
         "instancia": "setA-03",
+        "numWayPoints": 3,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -1092,7 +1096,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 8497
+        "tempoExecucao": 15339
     },
     {
         "demanda": {
@@ -1358,6 +1362,7 @@
             0.0
         ],
         "instancia": "setA-03",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -1365,6 +1370,6 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 7952
+        "tempoExecucao": 12994
     }
 ]

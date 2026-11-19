@@ -8,7 +8,7 @@
         "esquemaRoteamento": [
             434,
             190,
-            311,
+            751,
             657
         ],
         "fitness": [
@@ -3996,6 +3996,7 @@
             0.0
         ],
         "instancia": "setB-08",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -4003,7 +4004,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 272534
+        "tempoExecucao": 157936
     },
     {
         "demanda": {
@@ -4014,7 +4015,7 @@
         "esquemaRoteamento": [
             188,
             397,
-            118,
+            390,
             682
         ],
         "fitness": [
@@ -8002,6 +8003,7 @@
             0.0
         ],
         "instancia": "setB-08",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -8009,7 +8011,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 247962
+        "tempoExecucao": 160312
     },
     {
         "demanda": {
@@ -8020,7 +8022,7 @@
         "esquemaRoteamento": [
             624,
             465,
-            89,
+            115,
             315
         ],
         "fitness": [
@@ -12008,6 +12010,7 @@
             0.0
         ],
         "instancia": "setB-08",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -12015,7 +12018,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 258447
+        "tempoExecucao": 156281
     },
     {
         "demanda": {
@@ -12025,29 +12028,29 @@
         },
         "esquemaRoteamento": [
             16,
-            220,
-            205,
+            95,
+            168,
             219
         ],
         "fitness": [
             8.989889415481833e-05,
-            8.430518518518518e-05,
-            8.319590643274854e-05,
-            8.307445255474452e-05,
-            7.034116192830655e-05,
+            8.141058655221745e-05,
+            7.731793478260869e-05,
+            7.239949109414758e-05,
             6.965238678090576e-05,
             6.93130328867235e-05,
+            6.92287104622871e-05,
             6.694823529411764e-05,
-            6.132112068965517e-05,
+            6.616976744186046e-05,
+            6.336971046770601e-05,
             6.105793991416308e-05,
             5.298510242085661e-05,
             5.085433422698838e-05,
+            5.080892857142857e-05,
+            5.004925241864556e-05,
+            4.98737949167397e-05,
+            4.9526544821583986e-05,
             4.8762639245929734e-05,
-            4.675924404272802e-05,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
             0.0,
             0.0,
             0.0,
@@ -16014,6 +16017,7 @@
             0.0
         ],
         "instancia": "setB-08",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -16021,7 +16025,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 263550
+        "tempoExecucao": 160399
     },
     {
         "demanda": {
@@ -20019,6 +20023,7 @@
             0.0
         ],
         "instancia": "setB-08",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -20026,6 +20031,6 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 238469
+        "tempoExecucao": 143732
     }
 ]

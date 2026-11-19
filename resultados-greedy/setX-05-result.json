@@ -1527,6 +1527,7 @@
             0.0
         ],
         "instancia": "setX-05",
+        "numWayPoints": 3,
         "parametros": {
             "bias": 0.0,
             "numGeracoes": 0,
@@ -1534,7 +1535,7 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 5929
+        "tempoExecucao": 5535
     },
     {
         "demanda": {
@@ -3062,6 +3063,7 @@
             0.0
         ],
         "instancia": "setX-05",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.0,
             "numGeracoes": 0,
@@ -3069,23 +3071,23 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 5937
+        "tempoExecucao": 4395
     },
     {
         "demanda": {
             "source": 399,
             "target": 48,
-            "volume": 0.0
+            "volume": 0.1
         },
         "esquemaRoteamento": [
             399,
             48
         ],
         "fitness": [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
+            1.3015749056358195e-05,
+            2.544853034737244e-06,
+            6.578298194257146e-07,
+            2.0114613065245772e-07,
             0.0,
             0.0,
             0.0,
@@ -4596,6 +4598,7 @@
             0.0
         ],
         "instancia": "setX-05",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.0,
             "numGeracoes": 0,
@@ -4603,27 +4606,28 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 5784
+        "tempoExecucao": 3655
     },
     {
         "demanda": {
             "source": 286,
             "target": 7,
-            "volume": 0.0
+            "volume": 0.1
         },
         "esquemaRoteamento": [
             286,
+            41,
             7
         ],
         "fitness": [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
+            2.6288117770767615e-05,
+            8.97021887334051e-06,
+            8.25695648583932e-06,
+            6.125199068969742e-06,
+            5.923468783319512e-06,
+            4.2419614829897346e-07,
+            3.295826824075356e-07,
+            1.7755587239414565e-07,
             0.0,
             0.0,
             0.0,
@@ -6130,6 +6134,7 @@
             0.0
         ],
         "instancia": "setX-05",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.0,
             "numGeracoes": 0,
@@ -6137,31 +6142,32 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 5740
+        "tempoExecucao": 4263
     },
     {
         "demanda": {
             "source": 31,
             "target": 48,
-            "volume": 0.0
+            "volume": 0.1
         },
         "esquemaRoteamento": [
             31,
+            6,
             48
         ],
         "fitness": [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
+            9.960159362549801e-05,
+            5.841121495327103e-05,
+            1.5225334957369063e-05,
+            2.7552763542183283e-06,
+            2.544853034737244e-06,
+            2.2747435226678195e-06,
+            2.1321961620469086e-06,
+            1.1429616422072877e-06,
+            1.1334270299678107e-06,
+            1.0672358591248667e-06,
+            1.0442773600668338e-06,
+            2.0114613065245772e-07,
             0.0,
             0.0,
             0.0,
@@ -7664,6 +7670,7 @@
             0.0
         ],
         "instancia": "setX-05",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.0,
             "numGeracoes": 0,
@@ -7671,6 +7678,6 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 5794
+        "tempoExecucao": 4347
     }
 ]

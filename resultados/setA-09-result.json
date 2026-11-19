@@ -762,6 +762,7 @@
             0.0
         ],
         "instancia": "setA-09",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -769,7 +770,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 30180
+        "tempoExecucao": 30625
     },
     {
         "demanda": {
@@ -780,7 +781,8 @@
         "esquemaRoteamento": [
             23,
             31,
-            34,
+            123,
+            125,
             107
         ],
         "fitness": [
@@ -1536,6 +1538,7 @@
             0.0
         ],
         "instancia": "setA-09",
+        "numWayPoints": 3,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -1543,7 +1546,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 28397
+        "tempoExecucao": 41355
     },
     {
         "demanda": {
@@ -2310,6 +2313,7 @@
             0.0
         ],
         "instancia": "setA-09",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -2317,7 +2321,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 22322
+        "tempoExecucao": 38677
     },
     {
         "demanda": {
@@ -3084,6 +3088,7 @@
             0.0
         ],
         "instancia": "setA-09",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -3091,7 +3096,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 23328
+        "tempoExecucao": 43991
     },
     {
         "demanda": {
@@ -3101,7 +3106,6 @@
         },
         "esquemaRoteamento": [
             27,
-            2,
             142
         ],
         "fitness": [
@@ -3857,6 +3861,7 @@
             0.0
         ],
         "instancia": "setA-09",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -3864,6 +3869,6 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 17188
+        "tempoExecucao": 32861
     }
 ]

@@ -4110,6 +4110,7 @@
             0.0
         ],
         "instancia": "setC-09",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.0,
             "numGeracoes": 0,
@@ -4117,7 +4118,7 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 24806
+        "tempoExecucao": 17147
     },
     {
         "demanda": {
@@ -8230,6 +8231,7 @@
             0.0
         ],
         "instancia": "setC-09",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.0,
             "numGeracoes": 0,
@@ -8237,7 +8239,7 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 24631
+        "tempoExecucao": 17088
     },
     {
         "demanda": {
@@ -12350,6 +12352,7 @@
             0.0
         ],
         "instancia": "setC-09",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.0,
             "numGeracoes": 0,
@@ -12357,7 +12360,7 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 29791
+        "tempoExecucao": 16852
     },
     {
         "demanda": {
@@ -16470,6 +16473,7 @@
             0.0
         ],
         "instancia": "setC-09",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.0,
             "numGeracoes": 0,
@@ -16477,22 +16481,22 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 44551
+        "tempoExecucao": 17128
     },
     {
         "demanda": {
             "source": 490,
             "target": 139,
-            "volume": 0.0
+            "volume": 0.1
         },
         "esquemaRoteamento": [
             490,
             139
         ],
         "fitness": [
-            0.0,
-            0.0,
-            0.0,
+            0.0001,
+            0.0001,
+            0.0001,
             0.0,
             0.0,
             0.0,
@@ -20590,6 +20594,7 @@
             0.0
         ],
         "instancia": "setC-09",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.0,
             "numGeracoes": 0,
@@ -20597,6 +20602,6 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 44774
+        "tempoExecucao": 16996
     }
 ]

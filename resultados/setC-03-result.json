@@ -7,8 +7,8 @@
         },
         "esquemaRoteamento": [
             398,
-            166,
-            1111,
+            162,
+            713,
             726
         ],
         "fitness": [
@@ -21,8 +21,7 @@
             3.7159999999999997e-05,
             3.7159999999999997e-05,
             3.7159999999999997e-05,
-            1.8579999999999998e-05,
-            1.8579999999999998e-05,
+            3.7159999999999997e-05,
             1.8579999999999998e-05,
             1.8579999999999998e-05,
             1.8579999999999998e-05,
@@ -6663,9 +6662,11 @@
             0.0,
             0.0,
             0.0,
+            0.0,
             0.0
         ],
         "instancia": "setC-03",
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -6673,7 +6674,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 582999
+        "tempoExecucao": 340923
     },
     {
         "demanda": {
@@ -13340,6 +13341,7 @@
             0.0
         ],
         "instancia": "setC-03",
+        "numWayPoints": 0,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -13347,7 +13349,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 488421
+        "tempoExecucao": 280830
     },
     {
         "demanda": {
@@ -20015,6 +20017,7 @@
             0.0
         ],
         "instancia": "setC-03",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -20022,7 +20025,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 602863
+        "tempoExecucao": 323508
     },
     {
         "demanda": {
@@ -26690,6 +26693,7 @@
             0.0
         ],
         "instancia": "setC-03",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -26697,7 +26701,7 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 565571
+        "tempoExecucao": 322209
     },
     {
         "demanda": {
@@ -33365,6 +33369,7 @@
             0.0
         ],
         "instancia": "setC-03",
+        "numWayPoints": 1,
         "parametros": {
             "bias": 0.7,
             "numGeracoes": 1000,
@@ -33372,6 +33377,6 @@
             "tamanhoMutante": 30,
             "tamanhoPopulacao": 100
         },
-        "tempoExecucao": 554060
+        "tempoExecucao": 323302
     }
 ]
