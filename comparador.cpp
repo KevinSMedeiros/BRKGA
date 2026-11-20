@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <set>
 #include <sstream>
@@ -18,6 +19,7 @@ namespace fs = std::filesystem;
 struct Json {
     enum Type { Null, Bool, Num, Str, Arr, Obj } type = Null;
     double num = 0;
+    std::string numText;
     bool b = false;
     std::string str;
     std::vector<Json> arr;
@@ -143,7 +145,8 @@ public:
             }
             if (start == i) fail("token inesperado");
             value.type = Json::Num;
-            value.num = std::stod(text.substr(start, i - start));
+            value.numText = text.substr(start, i - start);
+            value.num = std::stod(value.numText);
         }
         return value;
     }
@@ -154,9 +157,12 @@ struct Registro {
     int target = 0;
     std::string numWayPoints = "-";
     double volume = 0;
+    std::string volumeOriginal;
     std::vector<int> rota;
     std::vector<double> fitness;
     double tempoMs = 0;
+    std::string tempoOriginal;
+    std::string melhorFitnessOriginal;
 
     double melhorFitness() const {
         return fitness.empty() ? 0.0 : *std::max_element(fitness.begin(), fitness.end());
@@ -345,6 +351,7 @@ static Arquivo carregar(const std::string& path) {
         registro.source = static_cast<int>(demanda.at("source").num);
         registro.target = static_cast<int>(demanda.at("target").num);
         registro.volume = demanda.at("volume").num;
+        registro.volumeOriginal = demanda.at("volume").numText;
         if (item.has("numWayPoints")) {
             const Json& numWayPoints = item.at("numWayPoints");
             if (numWayPoints.type != Json::Num) {
@@ -374,10 +381,14 @@ static Arquivo carregar(const std::string& path) {
                                          std::to_string(registroIndex) + ", indice " +
                                          std::to_string(fitnessIndex));
             }
+            if (fitnessIndex == 0 || value.num > registro.melhorFitness()) {
+                registro.melhorFitnessOriginal = value.numText;
+            }
             registro.fitness.push_back(value.num == 0.0 ? 0.0 : value.num);
         }
 
         registro.tempoMs = item.at("tempoExecucao").num;
+        registro.tempoOriginal = item.at("tempoExecucao").numText;
         if (arquivo.instancia.empty() && item.has("instancia")) {
             arquivo.instancia = item.at("instancia").str;
         }
@@ -413,15 +424,16 @@ static int primeiraDiferenca(const std::vector<double>& a, const std::vector<dou
     return a.size() != b.size() ? static_cast<int>(n) : -1;
 }
 
-static std::string fmt(double value, int precision = 4) {
+static std::string fmt(double value) {
     std::ostringstream stream;
-    stream << std::fixed << std::setprecision(precision) << value;
+    stream << std::setprecision(std::numeric_limits<double>::max_digits10) << value;
     return stream.str();
 }
 
 static std::string pct(double value) {
     std::ostringstream stream;
-    stream << std::showpos << std::fixed << std::setprecision(2) << value << "%";
+    stream << std::showpos << std::setprecision(std::numeric_limits<double>::max_digits10)
+           << value << "%";
     return stream.str();
 }
 
@@ -490,8 +502,8 @@ static ResultadoComparacao comparar(const Arquivo& a, const Arquivo& b, bool est
             const double y = rb.fitness[diferenca];
             const double maior = std::max(x, y);
             const double menor = std::min(x, y);
-            ganho = fmt(maior > 0 ? (maior - menor) / maior * 100.0 : 0.0, 2) +
-                    "% (" + melhor + ")";
+            ganho = pct(maior > 0 ? (maior - menor) / maior * 100.0 : 0.0) +
+                    " (" + melhor + ")";
         }
 
         resultado.linhas.push_back({
@@ -500,16 +512,16 @@ static ResultadoComparacao comparar(const Arquivo& a, const Arquivo& b, bool est
             metadadosInstancia->second.arcs,
             metadadosInstancia->second.maxSegments,
             std::to_string(ra.source) + "->" + std::to_string(ra.target),
-            fmt(ra.volume),
+            ra.volumeOriginal,
             ra.numWayPoints,
             rb.numWayPoints,
             ra.rotaStr(),
             rb.rotaStr(),
-            fmt(ra.tempoMs, 0),
-            fmt(rb.tempoMs, 0),
-            fmt(speedup, 1) + "x",
-            fmt(fa, 6),
-            fmt(fb, 6),
+            ra.tempoOriginal,
+            rb.tempoOriginal,
+            fmt(speedup) + "x",
+            ra.melhorFitnessOriginal.empty() ? fmt(fa) : ra.melhorFitnessOriginal,
+            rb.melhorFitnessOriginal.empty() ? fmt(fb) : rb.melhorFitnessOriginal,
             pct(variacao),
             std::to_string(ra.solucoesValidas()),
             std::to_string(rb.solucoesValidas()),
@@ -705,14 +717,14 @@ int main(int argc, char** argv) {
                                                comparison.somaFA * 100.0
                                          : 0.0;
         std::cout << "\n--- RESUMO (" << n << " demandas) ---\n";
-        std::cout << "Tempo total   A: " << fmt(comparison.somaTA, 0) << " ms | B: "
-                  << fmt(comparison.somaTB, 0) << " ms | speedup global A/B: "
-                  << fmt(comparison.somaTB > 0 ? comparison.somaTA / comparison.somaTB : 0, 1)
+        std::cout << "Tempo total   A: " << fmt(comparison.somaTA) << " ms | B: "
+                  << fmt(comparison.somaTB) << " ms | speedup global A/B: "
+                  << fmt(comparison.somaTB > 0 ? comparison.somaTA / comparison.somaTB : 0)
                   << "x\n";
-        std::cout << "Tempo medio   A: " << fmt(comparison.somaTA / n, 1) << " ms | B: "
-                  << fmt(comparison.somaTB / n, 1) << " ms\n";
-        std::cout << "Umax media    A: " << fmt(comparison.somaFA / n, 6) << " | B: "
-                  << fmt(comparison.somaFB / n, 6) << " | variacao B vs A: "
+        std::cout << "Tempo medio   A: " << fmt(comparison.somaTA / n) << " ms | B: "
+                  << fmt(comparison.somaTB / n) << " ms\n";
+        std::cout << "Umax media    A: " << fmt(comparison.somaFA / n) << " | B: "
+                  << fmt(comparison.somaFB / n) << " | variacao B vs A: "
                   << pct(variacaoMedia) << " (positivo = B pior)\n";
         std::cout << "Melhor vetor por demanda -> A: " << comparison.vitA
                   << " | B: " << comparison.vitB << " | empates: " << comparison.empates
