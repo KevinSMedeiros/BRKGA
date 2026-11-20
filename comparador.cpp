@@ -194,8 +194,17 @@ struct ResultadoComparacao {
     int empates = 0;
 };
 
+struct MetadadosInstancia {
+    std::string nodes;
+    std::string arcs;
+    std::string maxSegments;
+};
+
+using MapaMetadados = std::map<std::string, MetadadosInstancia>;
+
 static const std::vector<std::string> CABECALHO = {
-    "Instancia", "Demanda", "Volume", "NumWayPoints A", "NumWayPoints B",
+    "Instancia", "Nodes", "Arcs", "MaxSegments", "Demanda", "Volume",
+    "NumWayPoints A", "NumWayPoints B",
     "Rota A", "Rota B", "Tempo A(ms)", "Tempo B(ms)", "Speedup A/B",
     "Umax A", "Umax B", "Var. Umax", "Arcos>0 A", "Arcos>0 B",
     "1a dif.", "Ganho", "Melhor"};
@@ -206,6 +215,118 @@ static std::string lerArquivo(const std::string& path) {
     std::stringstream buffer;
     buffer << file.rdbuf();
     return buffer.str();
+}
+
+static std::string aparar(const std::string& value) {
+    const size_t start = value.find_first_not_of(" \t\r\n");
+    if (start == std::string::npos) return "";
+    const size_t end = value.find_last_not_of(" \t\r\n");
+    return value.substr(start, end - start + 1);
+}
+
+static std::string normalizar(const std::string& value) {
+    std::string normalized = value;
+    std::transform(normalized.begin(), normalized.end(), normalized.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return normalized;
+}
+
+static std::string normalizarColuna(const std::string& value) {
+    std::string normalized;
+    for (unsigned char c : value) {
+        if (std::isspace(c) || c == '_' || c == '-') continue;
+        normalized += static_cast<char>(std::tolower(c));
+    }
+    return normalized;
+}
+
+static std::vector<std::string> separarCelulasTabela(const std::string& line) {
+    std::vector<std::string> cells;
+    std::stringstream stream(line);
+    std::string cell;
+    while (std::getline(stream, cell, '|')) cells.push_back(aparar(cell));
+    if (!cells.empty() && cells.front().empty()) cells.erase(cells.begin());
+    if (!cells.empty() && cells.back().empty()) cells.pop_back();
+    return cells;
+}
+
+static std::string validarInteiroTabela(const std::string& value,
+                                        const std::string& readme,
+                                        const std::string& instance,
+                                        const std::string& column) {
+    size_t parsed = 0;
+    try {
+        const long long number = std::stoll(value, &parsed);
+        if (parsed != value.size() || number < 0) throw std::invalid_argument("valor");
+        return std::to_string(number);
+    } catch (const std::exception&) {
+        throw std::runtime_error(readme + ": valor invalido na coluna " + column +
+                                 " para " + instance + ": " + value);
+    }
+}
+
+static void carregarMetadadosSet(const fs::path& readme, MapaMetadados& metadados) {
+    std::ifstream file(readme);
+    if (!file) throw std::runtime_error("nao foi possivel abrir: " + readme.string());
+
+    std::map<std::string, size_t> columns;
+    std::string line;
+    while (std::getline(file, line)) {
+        const std::vector<std::string> cells = separarCelulasTabela(line);
+        if (cells.empty()) continue;
+
+        if (columns.empty()) {
+            std::map<std::string, size_t> candidate;
+            for (size_t i = 0; i < cells.size(); ++i) {
+                candidate[normalizarColuna(cells[i])] = i;
+            }
+            if (candidate.count("name") && candidate.count("nodes") &&
+                candidate.count("arcs") && candidate.count("maxsegments")) {
+                columns = std::move(candidate);
+            }
+            continue;
+        }
+
+        const size_t nameIndex = columns.at("name");
+        const size_t nodesIndex = columns.at("nodes");
+        const size_t arcsIndex = columns.at("arcs");
+        const size_t maxSegmentsIndex = columns.at("maxsegments");
+        if (cells.size() <= std::max(std::max(nameIndex, nodesIndex),
+                                     std::max(arcsIndex, maxSegmentsIndex))) {
+            continue;
+        }
+
+        const std::string instance = cells[nameIndex];
+        const std::string key = normalizar(instance);
+        if (key.size() < 6 || key.compare(0, 3, "set") != 0 ||
+            instance.find('-') == std::string::npos) {
+            continue;
+        }
+
+        MetadadosInstancia info{
+            validarInteiroTabela(cells[nodesIndex], readme.string(), instance, "Nodes"),
+            validarInteiroTabela(cells[arcsIndex], readme.string(), instance, "Arcs"),
+            validarInteiroTabela(cells[maxSegmentsIndex], readme.string(), instance, "Max segments")};
+        if (!metadados.emplace(key, std::move(info)).second) {
+            throw std::runtime_error("instancia duplicada nos readmes: " + instance);
+        }
+    }
+
+    if (columns.empty()) {
+        throw std::runtime_error("tabela com Name, Nodes, Arcs e Max segments nao encontrada em " +
+                                 readme.string());
+    }
+    if (!file.eof() && file.fail()) {
+        throw std::runtime_error("erro ao ler: " + readme.string());
+    }
+}
+
+static MapaMetadados carregarMetadados(const fs::path& pastaInstances) {
+    MapaMetadados metadados;
+    for (const std::string& set : {"setA", "setB", "setC", "setX"}) {
+        carregarMetadadosSet(pastaInstances / set / "readme.md", metadados);
+    }
+    return metadados;
 }
 
 static Arquivo carregar(const std::string& path) {
@@ -308,7 +429,8 @@ static std::pair<int, int> chaveDemanda(const Registro& registro) {
     return {registro.source, registro.target};
 }
 
-static ResultadoComparacao comparar(const Arquivo& a, const Arquivo& b, bool estrito) {
+static ResultadoComparacao comparar(const Arquivo& a, const Arquivo& b, bool estrito,
+                                    const MapaMetadados& metadados) {
     std::map<std::pair<int, int>, const Registro*> registrosB;
     for (const Registro& registro : b.regs) {
         if (!registrosB.emplace(chaveDemanda(registro), &registro).second) {
@@ -321,6 +443,10 @@ static ResultadoComparacao comparar(const Arquivo& a, const Arquivo& b, bool est
     ResultadoComparacao resultado;
     std::set<std::pair<int, int>> demandasComparadas;
     const std::string instancia = a.instancia.empty() ? a.nome : a.instancia;
+    const auto metadadosInstancia = metadados.find(normalizar(instancia));
+    if (metadadosInstancia == metadados.end()) {
+        throw std::runtime_error("instancia ausente nos readmes: " + instancia);
+    }
     for (const Registro& ra : a.regs) {
         const auto key = chaveDemanda(ra);
         if (!demandasComparadas.insert(key).second) {
@@ -370,6 +496,9 @@ static ResultadoComparacao comparar(const Arquivo& a, const Arquivo& b, bool est
 
         resultado.linhas.push_back({
             instancia,
+            metadadosInstancia->second.nodes,
+            metadadosInstancia->second.arcs,
+            metadadosInstancia->second.maxSegments,
             std::to_string(ra.source) + "->" + std::to_string(ra.target),
             fmt(ra.volume),
             ra.numWayPoints,
@@ -437,13 +566,6 @@ static void escreverCsv(const fs::path& path, const std::vector<std::vector<std:
     if (!csv) throw std::runtime_error("erro ao escrever o CSV: " + path.string());
 }
 
-static std::string normalizar(const std::string& value) {
-    std::string normalized = value;
-    std::transform(normalized.begin(), normalized.end(), normalized.begin(),
-                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    return normalized;
-}
-
 static bool arquivoResultado(const std::string& name) {
     const std::string normalized = normalizar(name);
     return normalized.size() == 19 && normalized.compare(0, 3, "set") == 0 &&
@@ -484,6 +606,7 @@ void compararPastas(const std::string& pastaA, const std::string& pastaB,
                     const std::string& pastaSaida) {
     const auto arquivosA = listarResultados(pastaA);
     const auto arquivosB = listarResultados(pastaB);
+    const MapaMetadados metadados = carregarMetadados("instances");
     if (arquivosA.size() != arquivosB.size()) {
         throw std::runtime_error("as pastas possuem quantidades diferentes de arquivos de resultado");
     }
@@ -497,7 +620,7 @@ void compararPastas(const std::string& pastaA, const std::string& pastaB,
         }
         const Arquivo a = carregar(entry.second.string());
         const Arquivo b = carregar(itB->second.string());
-        ResultadoComparacao comparison = comparar(a, b, true);
+        ResultadoComparacao comparison = comparar(a, b, true, metadados);
         std::vector<std::vector<std::string>>& setRows = linhasPorSet[nomeSet(entry.first)];
         setRows.insert(setRows.end(), comparison.linhas.begin(), comparison.linhas.end());
     }
@@ -570,7 +693,8 @@ int main(int argc, char** argv) {
 
         const Arquivo a = carregar(argv[1]);
         const Arquivo b = carregar(argv[2]);
-        const ResultadoComparacao comparison = comparar(a, b, false);
+        const MapaMetadados metadados = carregarMetadados("instances");
+        const ResultadoComparacao comparison = comparar(a, b, false, metadados);
         std::cout << "\n=== QUADRO COMPARATIVO ===\n";
         std::cout << "A: " << a.nome << " [" << a.params << "]\n";
         std::cout << "B: " << b.nome << " [" << b.params << "]\n\n";
