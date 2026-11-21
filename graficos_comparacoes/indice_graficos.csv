@@ -1,0 +1,17 @@
+﻿arquivo,titulo,fontes,campos,recorte,registros
+01_arcos_usados_pareados.png,Arcos usados por A e B por conjunto (pontos abaixo da diagonal: B usa menos),"setA.csv, setB.csv, setC.csv, setX.csv","Arcos>0 A, Arcos>0 B","Todas as demandas, incluindo empates",240
+02_diferenca_arcos_usados.png,Distribuição da diferença de arcos usados,"setA.csv, setB.csv, setC.csv, setX.csv","Arcos>0 A, Arcos>0 B e diferença A-B","Todas as demandas, separadas por conjunto",240
+03_fracao_arcos_usados.png,Fração de arcos usados por tamanho do grafo,"setA.csv, setB.csv, setC.csv, setX.csv","Arcs, Arcos>0 A, Arcos>0 B",Todas as demandas; A e B representados separadamente,240
+04_tempo_vs_arestas.png,Tempo de execução versus número de arestas,"setA.csv, setB.csv, setC.csv, setX.csv","Arcs, Tempo A(ms), Tempo B(ms)",Todas as demandas; escalas logarítmicas nos dois eixos,240
+05_tempo_A_vs_B.png,Comparação pareada dos tempos de execução,"setA.csv, setB.csv, setC.csv, setX.csv","Tempo A(ms), Tempo B(ms)","Todas as demandas, incluindo empates",240
+06_speedup_vs_arestas.png,Speedup A/B por tamanho da instância (acima de 1: B mais rápido),"setA.csv, setB.csv, setC.csv, setX.csv","Arcs, Speedup A/B",Todas as demandas; speedup acima de 1 significa Tempo A > Tempo B,240
+07_ganho_assinado_vs_arestas.png,Ganho no primeiro critério divergente versus número de arestas,"setA.csv, setB.csv, setC.csv, setX.csv","Arcs, Ganho, Melhor",Somente demandas decididas (A ou B); empates não têm ganho,84
+08_distribuicao_ganho_por_vencedor.png,"Distribuição do ganho, separada pelo vencedor e pelo conjunto","setA.csv, setB.csv, setC.csv, setX.csv","Ganho, Melhor","Somente demandas decididas; magnitude do ganho, separada por vencedor",84
+09_ganho_vs_primeira_diferenca.png,Ganho versus posição da primeira diferença no vetor de fitness,"setA.csv, setB.csv, setC.csv, setX.csv","1a dif., Ganho, Melhor",Somente demandas decididas com primeira diferença registrada,84
+10_primeira_diferenca_por_vencedor.png,Frequência da primeira diferença por posição e vencedor,"setA.csv, setB.csv, setC.csv, setX.csv","1a dif., Melhor",Somente demandas decididas com primeira diferença registrada,84
+11_waypoints_A_vs_B.png,Número de waypoints nas soluções de A e B,"setA.csv, setB.csv, setC.csv, setX.csv","NumWayPoints A, NumWayPoints B","Todas as demandas, incluindo empates; linha diagonal indica valores iguais",240
+12_diferenca_waypoints_vs_speedup.png,Diferença de waypoints versus speedup,"setA.csv, setB.csv, setC.csv, setX.csv","NumWayPoints A, NumWayPoints B, Speedup A/B",Todas as demandas; diferença positiva significa mais waypoints em B,240
+13_diferenca_waypoints_vs_ganho.png,Diferença de waypoints versus ganho assinado,"setA.csv, setB.csv, setC.csv, setX.csv","NumWayPoints A, NumWayPoints B, Ganho, Melhor",Somente demandas decididas; ganho positivo favorece A,84
+14_resultados_por_conjunto.png,Vitórias e empates por conjunto,"setA.csv, setB.csv, setC.csv, setX.csv","Conjunto, Melhor","Todas as demandas, incluindo empates",240
+15_ganho_vs_volume.png,Ganho assinado versus volume,"setA.csv, setB.csv, setC.csv, setX.csv","Volume, Ganho, Melhor",Somente demandas decididas com volume positivo,84
+16_diferenca_arcos_vs_ganho.png,Diferença de arcos usados versus ganho assinado,"setA.csv, setB.csv, setC.csv, setX.csv","Arcos>0 A, Arcos>0 B, Ganho, Melhor",Somente demandas decididas; ganho positivo favorece A,84
