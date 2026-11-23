@@ -18,7 +18,7 @@ using json = nlohmann::json;
 struct Edge
 {
     int to;
-    long long weight;
+    double weight;
     double capacity;
     int id;
 };
@@ -26,7 +26,7 @@ struct Edge
 struct Node
 {
     int vertex;
-    long long dist;
+    double dist;
     bool operator>(const Node &other) const
     {
         return dist > other.dist;
@@ -112,10 +112,10 @@ std::vector<double> crossOver(const std::vector<double> &elite, const std::vecto
 // ---------------------------------------------------------------------
 
 void dijkstraComPredecessores(int start, const std::vector<std::vector<Edge>> &graph,
-                              std::vector<long long> &dist, std::vector<std::vector<int>> &parentList)
+                              std::vector<double> &dist, std::vector<std::vector<int>> &parentList)
 {
     int n = graph.size();
-    dist.assign(n, std::numeric_limits<long long>::max());
+    dist.assign(n, std::numeric_limits<double>::max());
     parentList.assign(n, {});
     std::priority_queue<Node, std::vector<Node>, std::greater<Node>> pq;
     dist[start] = 0;
@@ -126,7 +126,7 @@ void dijkstraComPredecessores(int start, const std::vector<std::vector<Edge>> &g
         Node current = pq.top();
         pq.pop();
         int u = current.vertex;
-        long long d = current.dist;
+        double d = current.dist;
 
         if (d > dist[u])
             continue;
@@ -134,7 +134,7 @@ void dijkstraComPredecessores(int start, const std::vector<std::vector<Edge>> &g
         for (const auto &edge : graph[u])
         {
             int v = edge.to;
-            long long weight = edge.weight;
+            double weight = edge.weight;
 
             if (dist[u] + weight < dist[v])
             {
@@ -150,10 +150,10 @@ void dijkstraComPredecessores(int start, const std::vector<std::vector<Edge>> &g
     }
 }
 
-void floydWarshall(const std::vector<std::vector<Edge>> &graph, std::vector<std::vector<long long>> &dist)
+void floydWarshall(const std::vector<std::vector<Edge>> &graph, std::vector<std::vector<double>> &dist)
 {
     int n = graph.size();
-    dist.assign(n, std::vector<long long>(n, std::numeric_limits<long long>::max()));
+    dist.assign(n, std::vector<double>(n, std::numeric_limits<double>::max()));
 
     for (int u = 0; u < n; ++u)
     {
@@ -168,11 +168,11 @@ void floydWarshall(const std::vector<std::vector<Edge>> &graph, std::vector<std:
     {
         for (int i = 0; i < n; ++i)
         {
-            if (dist[i][k] == std::numeric_limits<long long>::max())
+            if (dist[i][k] == std::numeric_limits<double>::max())
                 continue;
             for (int j = 0; j < n; ++j)
             {
-                if (dist[k][j] == std::numeric_limits<long long>::max())
+                if (dist[k][j] == std::numeric_limits<double>::max())
                     continue;
                 if (dist[i][k] + dist[k][j] < dist[i][j])
                 {
@@ -286,29 +286,32 @@ std::vector<std::vector<Edge>> construirGrafoReverso(const std::vector<std::vect
 bool acumulaCargaSegmento(int i, int j, double volume,
                           const std::vector<std::vector<Edge>> &graph,
                           std::vector<std::vector<double>> &cargaAcumulada,
-                          const std::vector<std::vector<long long>> &distancias)
+                          const std::vector<std::vector<double>> &distancias)
 {
     int n = static_cast<int>(graph.size());
 
-    if (distancias[i][j] == std::numeric_limits<long long>::max())
+    if (distancias[i][j] == std::numeric_limits<double>::max())
         return false;
 
-    long long total = distancias[i][j];
+    double total = distancias[i][j];
 
     // sucessoresValidos[u] = lista de (v, índice da aresta em graph[u])
     // que pertencem a algum caminho mínimo de i até j
     std::vector<std::vector<std::pair<int, int>>> sucessoresValidos(n);
     for (int u = 0; u < n; ++u)
     {
-        if (distancias[i][u] == std::numeric_limits<long long>::max())
+        if (distancias[i][u] == std::numeric_limits<double>::max())
             continue;
         for (size_t e = 0; e < graph[u].size(); ++e)
         {
             int v = graph[u][e].to;
-            long long w = graph[u][e].weight;
-            if (distancias[v][j] == std::numeric_limits<long long>::max())
+            double w = graph[u][e].weight;
+            if (distancias[v][j] == std::numeric_limits<double>::max())
                 continue;
-            if (distancias[i][u] + w + distancias[v][j] == total)
+            double custo = distancias[i][u] + w + distancias[v][j];
+            double tolerancia = 64.0 * std::numeric_limits<double>::epsilon() *
+                                std::max({1.0, std::abs(custo), std::abs(total)});
+            if (std::abs(custo - total) <= tolerancia)
                 sucessoresValidos[u].push_back({v, static_cast<int>(e)});
         }
     }
@@ -339,14 +342,14 @@ bool acumulaCargaSegmento(int i, int j, double volume,
             cargaAcumulada[u][e] += parcela * volume; // r(i,j,a) * volume
         }
     }
-    return fluxo[j] > 0.0;
+    return std::abs(fluxo[j] - 1.0) <= 1e-9;
 }
 
 // Monta o vetor de fitness L = { lambda(a) : a em A } para o caminho p
 // completo (todos os segmentos), já ordenado de forma decrescente.
 std::vector<double> calculaVetorCarga(const std::vector<int> &p, double volume,
                                       const std::vector<std::vector<Edge>> &graph,
-                                      const std::vector<std::vector<long long>> &distancias)
+                                      const std::vector<std::vector<double>> &distancias)
 {
     int n = static_cast<int>(graph.size());
 
@@ -402,7 +405,7 @@ bool melhorFitness(const std::vector<double> &a, const std::vector<double> &b)
 // útil para logs/relatórios.
 double fitness(std::vector<int> caminhoSegmentos,
                const std::vector<std::vector<Edge>> &graph,
-               const std::vector<std::vector<long long>> &distancias, double volume,
+               const std::vector<std::vector<double>> &distancias, double volume,
                std::vector<double> &vetorCarga)
 {
     vetorCarga = calculaVetorCarga(caminhoSegmentos, volume, graph, distancias);
@@ -429,7 +432,7 @@ void carregaGrafoDeArquivo(const std::string &nomeArquivo, std::vector<std::vect
         int from = aresta["from"];
         int id = aresta["id"].get<int>();
         int to = aresta["to"];
-        long long weight = aresta["metric"].get<long long>();
+        double weight = aresta["metric"].get<double>();
         double capacity = aresta["capacity"];
         graph[from].push_back({to, weight, capacity, id});
     }
@@ -494,7 +497,7 @@ void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoP
     int tamanhoCromossomo = static_cast<int>(graph.size()) + 1;
     std::vector<individuo> populacao(tamanhoPopulacao);
 
-    std::vector<std::vector<long long>> distancias;
+    std::vector<std::vector<double>> distancias;
     floydWarshall(graph, distancias);
     for (int i = 0; i < tamanhoPopulacao; ++i)
     {
@@ -538,21 +541,21 @@ void BRKGA(const std::vector<std::vector<Edge>> &graph, int maxSeg, int tamanhoP
     }
 }
 
-void greedy(const std::vector<std::vector<Edge>> &graph, int maxSeg, Demanda &demanda, std::vector<int> &melhorCaminhoSegmentos, std::vector<double> &bestFitness)
+void greedy(const std::vector<std::vector<Edge>> &graph, int maxSeg, const Demanda &demanda, std::vector<int> &melhorCaminhoSegmentos, std::vector<double> &bestFitness)
 {
-    std::vector<std::vector<long long>> distancias;
+    std::vector<std::vector<double>> distancias;
     floydWarshall(graph, distancias);
     melhorCaminhoSegmentos = {demanda.source, demanda.target};
 
     fitness(melhorCaminhoSegmentos, graph, distancias, demanda.volume, bestFitness);
-        std::vector<int> bomCaminhoSegmentos = {demanda.source, demanda.target};
-        std::vector<double> bomFitness;
+    std::vector<int> melhorCaminhoLocal = melhorCaminhoSegmentos;
+    std::vector<double> melhorFitnessLocal;
     for (int i = 1; i < maxSeg; ++i)
     {
 
-        std::vector<int> caminhoSegmentos = bomCaminhoSegmentos;
+        std::vector<int> caminhoSegmentos = melhorCaminhoLocal;
         std::vector<double> fitnessSolucao;
-        bomFitness = bestFitness;
+        melhorFitnessLocal.clear();
         for (int j = 0; j < graph.size(); ++j)
         {
             if (std::find(caminhoSegmentos.begin(), caminhoSegmentos.end(), j) != caminhoSegmentos.end())
@@ -561,33 +564,26 @@ void greedy(const std::vector<std::vector<Edge>> &graph, int maxSeg, Demanda &de
             caminhoSegmentos.insert(caminhoSegmentos.end() - 1, j);
 
             fitness(caminhoSegmentos, graph, distancias, demanda.volume, fitnessSolucao);
-            if (melhorFitness(fitnessSolucao, bomFitness))
+            if (!fitnessSolucao.empty() && std::isfinite(fitnessSolucao.front()) &&
+                (melhorFitnessLocal.empty() || melhorFitness(fitnessSolucao, melhorFitnessLocal)))
             {
-                bomFitness = fitnessSolucao;
-                bomCaminhoSegmentos = caminhoSegmentos;
+                melhorFitnessLocal = fitnessSolucao;
+                melhorCaminhoLocal = caminhoSegmentos;
             }
             caminhoSegmentos.erase(caminhoSegmentos.end() - 2);
         }
-        if (melhorFitness(bomFitness, bestFitness))
+        if (!melhorFitnessLocal.empty() && melhorFitness(melhorFitnessLocal, bestFitness))
         {
-            std::cout << "Melhor solução geral encontrada: " << bomFitness[0];
-            std::cout << " com caminho: ";
-            for (int k = 0; k < bomCaminhoSegmentos.size(); ++k)
-            {
-                std::cout << bomCaminhoSegmentos[k];
-                if (k < bomCaminhoSegmentos.size() - 1)
-                    std::cout << " -> ";
-            }
-            bestFitness = bomFitness;
-            melhorCaminhoSegmentos = bomCaminhoSegmentos;
+            bestFitness = melhorFitnessLocal;
+            melhorCaminhoSegmentos = melhorCaminhoLocal;
         }
     }
 }
 int main()
 {
-    for (const std::string &set : {"setC"})
+    for (const std::string &set : {"setB", "setC", "setX"})
     {
-        for (const std::string &instance : {"09"})
+        for (const std::string &instance : { "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12" })
         { 
             std::vector<Demanda> demandas;
             int maxSeg;
@@ -630,30 +626,30 @@ int main()
                 resultadosGreedy.push_back(resultadoGreedy);
                 std::cout << "Tempo de execução (guloso): " << resultadoGreedy.tempoExecucao << " ms" << std::endl;
 
-                resultado resultadoBrkga;
-                individuo melhorIndividuoBrkga;
-                start = std::chrono::high_resolution_clock::now();
-                BRKGA(graph, maxSeg, 100, 20, 30, 1000, 0.7, melhorIndividuoBrkga, demandas[indiceDemanda]);
-                end = std::chrono::high_resolution_clock::now();
-                resultadoBrkga.instancia = set + "-" + instance;
-                resultadoBrkga.fitness = melhorIndividuoBrkga.fitness;
-                resultadoBrkga.esquemaRoteamento = decoder(melhorIndividuoBrkga.cromossomo, graph, demandas[indiceDemanda].source, demandas[indiceDemanda].target, maxSeg);
-                resultadoBrkga.tempoExecucao = static_cast<long long>(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-                resultadoBrkga.demanda = demandas[indiceDemanda];
-                resultadoBrkga.parametros = {100, 20, 30, 1000, 0.7};
-                resultadoBrkga.numWayPoints = static_cast<int>(resultadoBrkga.esquemaRoteamento.size()) - 2;
-                resultadosBrkga.push_back(resultadoBrkga);
-                std::cout << "Tempo de execução (BRKGA): " << resultadoBrkga.tempoExecucao << " ms" << std::endl;
+                // resultado resultadoBrkga;
+                // individuo melhorIndividuoBrkga;
+                // start = std::chrono::high_resolution_clock::now();
+                // BRKGA(graph, maxSeg, 100, 20, 30, 1000, 0.7, melhorIndividuoBrkga, demandas[indiceDemanda]);
+                // end = std::chrono::high_resolution_clock::now();
+                // resultadoBrkga.instancia = set + "-" + instance;
+                // resultadoBrkga.fitness = melhorIndividuoBrkga.fitness;
+                // resultadoBrkga.esquemaRoteamento = decoder(melhorIndividuoBrkga.cromossomo, graph, demandas[indiceDemanda].source, demandas[indiceDemanda].target, maxSeg);
+                // resultadoBrkga.tempoExecucao = static_cast<long long>(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+                // resultadoBrkga.demanda = demandas[indiceDemanda];
+                // resultadoBrkga.parametros = {100, 20, 30, 1000, 0.7};
+                // resultadoBrkga.numWayPoints = static_cast<int>(resultadoBrkga.esquemaRoteamento.size()) - 2;
+                // resultadosBrkga.push_back(resultadoBrkga);
+                // std::cout << "Tempo de execução (BRKGA): " << resultadoBrkga.tempoExecucao << " ms" << std::endl;
             }
-            std::ofstream brkgaOutFile("resultados/" + set + "-" + instance + "-result.json");
-            if (brkgaOutFile)
-            {
-                brkgaOutFile << json(resultadosBrkga).dump(4) << std::endl;
-            }
-            else
-            {
-                std::cerr << "Error writing BRKGA results file." << std::endl;
-            }
+            // std::ofstream brkgaOutFile("resultados/" + set + "-" + instance + "-result.json");
+            // if (brkgaOutFile)
+            // {
+            //     brkgaOutFile << json(resultadosBrkga).dump(4) << std::endl;
+            // }
+            // else
+            // {
+            //     std::cerr << "Error writing BRKGA results file." << std::endl;
+            // }
 
             std::ofstream greedyOutFile("resultados-greedy/" + set + "-" + instance + "-result.json");
             if (greedyOutFile)

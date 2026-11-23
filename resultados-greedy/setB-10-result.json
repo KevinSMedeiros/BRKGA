@@ -2616,7 +2616,7 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 23733
+        "tempoExecucao": 20500
     },
     {
         "demanda": {
@@ -5234,7 +5234,7 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 21116
+        "tempoExecucao": 19946
     },
     {
         "demanda": {
@@ -7853,7 +7853,7 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 23404
+        "tempoExecucao": 19142
     },
     {
         "demanda": {
@@ -10472,7 +10472,7 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 24141
+        "tempoExecucao": 20554
     },
     {
         "demanda": {
@@ -13090,6 +13090,6 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 22070
+        "tempoExecucao": 36473
     }
 ]

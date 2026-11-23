@@ -7,20 +7,22 @@
         },
         "esquemaRoteamento": [
             280,
+            285,
+            141,
             573
         ],
         "fitness": [
             8.59106529209622e-05,
             4.3725404459991255e-05,
-            1.1243534967393749e-05,
-            1.0246951531919255e-05,
-            9.746588693957115e-06,
-            9.506607091928891e-06,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
+            9.238728750923873e-06,
+            8.91583452211127e-06,
+            6.517205422314912e-06,
+            6.26017278076875e-06,
+            5.582849486377847e-06,
+            5.148270181219111e-06,
+            4.9835542709060105e-06,
+            4.929022082018928e-06,
+            4.8267207259387975e-06,
             0.0,
             0.0,
             0.0,
@@ -4466,7 +4468,7 @@
             0.0
         ],
         "instancia": "setB-12",
-        "numWayPoints": 0,
+        "numWayPoints": 2,
         "parametros": {
             "bias": 0.0,
             "numGeracoes": 0,
@@ -4474,7 +4476,7 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 17733
+        "tempoExecucao": 70950
     },
     {
         "demanda": {
@@ -8953,7 +8955,7 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 38855
+        "tempoExecucao": 46693
     },
     {
         "demanda": {
@@ -13432,7 +13434,7 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 38068
+        "tempoExecucao": 64879
     },
     {
         "demanda": {
@@ -17910,7 +17912,7 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 35886
+        "tempoExecucao": 68386
     },
     {
         "demanda": {
@@ -22388,6 +22390,6 @@
             "tamanhoMutante": 0,
             "tamanhoPopulacao": 0
         },
-        "tempoExecucao": 35653
+        "tempoExecucao": 44523
     }
 ]

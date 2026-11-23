@@ -325,6 +325,48 @@ def plot_gain_by_winner(data: pd.DataFrame, output_dir: Path, manifest: Manifest
     )
 
 
+def plot_gain_boxplot_by_winner(data: pd.DataFrame, output_dir: Path, manifest: Manifest) -> None:
+    decided = decided_with_gain(data)
+    figure, panels = set_panels(data, sharey=True, panel_width=5.8)
+    for set_name, axis in panels:
+        subset = decided.loc[decided["Conjunto"].eq(set_name)]
+        labels = []
+        for position, winner in enumerate(ALGORITHMS, start=1):
+            values = subset.loc[subset["Melhor"].eq(winner), GAIN]
+            labels.append(f"{ALGORITHMS[winner]}  (n={len(values)})")
+            color = WINNER_COLORS[winner]
+            if values.empty:
+                axis.text(position, 7, "Sem vitórias", ha="center", color=NEUTRAL, fontsize=9)
+                continue
+            axis.boxplot(
+                [values], positions=[position], widths=0.54, manage_ticks=False,
+                patch_artist=True, showmeans=True, showfliers=True,
+                boxprops={"facecolor": color, "edgecolor": color, "alpha": 0.18},
+                medianprops={"color": color, "linewidth": 2},
+                whiskerprops={"color": color, "linewidth": 1.3},
+                capprops={"color": color, "linewidth": 1.3},
+                meanprops={"marker": "D", "markerfacecolor": INK,
+                           "markeredgecolor": "white", "markersize": 6},
+                flierprops={"marker": "o", "markerfacecolor": color,
+                            "markeredgecolor": "white", "markersize": 5, "alpha": 0.8},
+            )
+        axis.set(
+            title=set_name, xticks=[1, 2], xticklabels=labels,
+            xlim=(0.45, 2.55), ylim=(-4, 84), yticks=[0, 20, 40, 60, 80],
+        )
+        axis.tick_params(labelleft=True, labelbottom=True)
+        axis.grid(axis="y")
+        if set_name in ("setA", "setC"):
+            axis.set_ylabel("Ganho na primeira diferença (%)")
+    save_chart(
+        figure, output_dir, "29_boxplot_ganho_por_vencedor_e_conjunto.png",
+        "Distribuição do ganho por vencedor e conjunto", decided, "Conjunto, Ganho, Melhor",
+        "Caixas: quartis e mediana. Bigodes: até 1,5 × IQR. Círculos: valores atípicos. "
+        "Losangos: médias. Ganho medido na primeira diferença lexicográfica.",
+        manifest,
+    )
+
+
 def first_difference_panels(data: pd.DataFrame):
     decided = decided_with_gain(data).dropna(subset=[RANK])
     ranks = sorted(decided[RANK].astype(int).unique())
@@ -625,6 +667,97 @@ def plot_gain_boxplot(data: pd.DataFrame, output_dir: Path, manifest: Manifest) 
     )
 
 
+def _plot_gain_boxplot_by_set(
+    data: pd.DataFrame,
+    output_dir: Path,
+    manifest: Manifest,
+    set_name: str,
+    filename: str,
+) -> None:
+    subset = data.loc[data["Conjunto"].eq(set_name)]
+    decided, figure, axes = first_difference_panels(subset)
+    for winner, axis in zip(ALGORITHMS, axes):
+        winner_subset = decided.loc[decided["Melhor"].eq(winner)]
+        color = WINNER_COLORS[winner]
+        groups = winner_subset.groupby(RANK)[GAIN]
+        boxes = [(rank, gains) for rank, gains in groups if len(gains) >= 2]
+        if boxes:
+            axis.boxplot(
+                [gains for _, gains in boxes],
+                positions=[rank for rank, _ in boxes],
+                widths=0.63,
+                manage_ticks=False,
+                patch_artist=True,
+                showfliers=False,
+                boxprops={"facecolor": color, "edgecolor": color, "alpha": 0.18},
+                medianprops={"color": color, "linewidth": 1.6},
+                whiskerprops={"color": color},
+                capprops={"color": color},
+            )
+        for rank, gains in groups:
+            axis.scatter(
+                rank + offsets_for_points(len(gains), 0.22),
+                gains,
+                s=19,
+                color=color,
+                alpha=0.76,
+                edgecolors="white",
+                linewidths=0.45,
+                zorder=3,
+            )
+            axis.text(
+                rank, 107, f"n={len(gains)}",
+                ha="center", va="center", fontsize=7.5, color=NEUTRAL,
+            )
+    save_chart(
+        figure,
+        output_dir,
+        filename,
+        f"Distribuição do ganho por posição da primeira diferença  ·  {set_name}",
+        decided,
+        "Conjunto, 1a dif., Ganho, Melhor",
+        "Caixas mostram mediana e quartis para n ≥ 2. Bigodes de até 1,5 × IQR. "
+        "Todos os ganhos aparecem como pontos.",
+        manifest,
+    )
+
+
+def plot_gain_boxplot_setA(
+    data: pd.DataFrame, output_dir: Path, manifest: Manifest,
+) -> None:
+    _plot_gain_boxplot_by_set(
+        data, output_dir, manifest, "setA",
+        "24_boxplot_ganho_primeira_diferenca_setA.png",
+    )
+
+
+def plot_gain_boxplot_setB(
+    data: pd.DataFrame, output_dir: Path, manifest: Manifest,
+) -> None:
+    _plot_gain_boxplot_by_set(
+        data, output_dir, manifest, "setB",
+        "25_boxplot_ganho_primeira_diferenca_setB.png",
+    )
+
+
+def plot_gain_boxplot_setC(
+    data: pd.DataFrame, output_dir: Path, manifest: Manifest,
+) -> None:
+    _plot_gain_boxplot_by_set(
+        data, output_dir, manifest, "setC",
+        "26_boxplot_ganho_primeira_diferenca_setC.png",
+    )
+
+
+def plot_gain_boxplot_setX(
+    data: pd.DataFrame, output_dir: Path, manifest: Manifest,
+) -> None:
+    _plot_gain_boxplot_by_set(
+        data, output_dir, manifest, "setX",
+        "27_boxplot_ganho_primeira_diferenca_setX.png",
+    )
+
+
 def plot_waypoints_by_outcome(
     data: pd.DataFrame, output_dir: Path, manifest: Manifest, *, split_wins: bool = False,
 ) -> None:
@@ -748,6 +881,53 @@ def plot_active_arc_fraction_by_outcome(data: pd.DataFrame, output_dir: Path, ma
     )
 
 
+def plot_active_arc_count_by_outcome(
+    data: pd.DataFrame, output_dir: Path, manifest: Manifest,
+) -> None:
+    valid = data.loc[
+        data["Melhor"].isin([*ALGORITHMS, "Empate"])
+        & data[ACTIVE_ARCS].ge(0).all(axis=1)
+    ]
+    outcomes = valid["Melhor"].eq("Empate").map(
+        {True: "Empate", False: "Com vencedor"}
+    )
+
+    figure, axes = plt.subplots(1, 2, figsize=(10.6, 5.4), sharey=True)
+    for axis, (algorithm, column) in zip(axes, zip(ALGORITHMS.values(), ACTIVE_ARCS)):
+        for outcome, color in OUTCOME_COLORS.items():
+            values = valid.loc[outcomes.eq(outcome), column]
+            if not values.empty:
+                axis.ecdf(
+                    values,
+                    color=color,
+                    linewidth=2,
+                    label=f"{outcome} (n={len(values)})",
+                )
+        axis.set(
+            title=algorithm,
+            xlabel="Quantidade de arcos usados (Arcos>0)",
+            ylim=(0, 1.02),
+            yticks=np.linspace(0, 1, 6),
+        )
+        axis.xaxis.set_major_locator(MaxNLocator(integer=True))
+        axis.grid()
+    axes[0].set_ylabel("Proporção acumulada das demandas")
+    axes[0].yaxis.set_major_formatter(PercentFormatter(xmax=1, decimals=0))
+    axes[1].legend(loc="lower right")
+    save_chart(
+        figure,
+        output_dir,
+        "28_quantidade_arcos_usados_por_desfecho.png",
+        "Quantidade de arcos usados em empates e demandas com vencedor",
+        valid,
+        "Arcos>0 A, Arcos>0 B, Melhor",
+        "Contagens absolutas, sem dividir por Arcs; a altura indica a proporção "
+        "de demandas com essa quantidade ou menos. A contagem pode variar com "
+        "o tamanho da instância.",
+        manifest,
+    )
+
+
 def generate_charts(input_dir: Path, output_dir: Path) -> Manifest:
     """Gera os PNGs e o índice com a origem e o recorte de cada gráfico."""
     data, _ = read_comparisons(input_dir)
@@ -764,6 +944,7 @@ def generate_charts(input_dir: Path, output_dir: Path) -> Manifest:
             fields="Arcs, Ganho, Melhor",
         )
         plot_gain_by_winner(data, output_dir, manifest)
+        plot_gain_boxplot_by_winner(data, output_dir, manifest)
         plot_gain_by_first_difference(data, output_dir, manifest)
         plot_first_difference_counts(data, output_dir, manifest)
         plot_waypoints_paired(data, output_dir, manifest)
@@ -786,7 +967,12 @@ def generate_charts(input_dir: Path, output_dir: Path) -> Manifest:
         plot_waypoints_by_outcome(data, output_dir, manifest)
         plot_paired_waypoint_heatmap(data, output_dir, manifest)
         plot_active_arc_fraction_by_outcome(data, output_dir, manifest)
+        plot_active_arc_count_by_outcome(data, output_dir, manifest)
         plot_waypoints_by_outcome(data, output_dir, manifest, split_wins=True)
+        plot_gain_boxplot_setA(data, output_dir, manifest)
+        plot_gain_boxplot_setB(data, output_dir, manifest)
+        plot_gain_boxplot_setC(data, output_dir, manifest)
+        plot_gain_boxplot_setX(data, output_dir, manifest)
 
     pd.DataFrame(manifest).to_csv(output_dir / "indice_graficos.csv", index=False, encoding="utf-8-sig")
     return manifest
